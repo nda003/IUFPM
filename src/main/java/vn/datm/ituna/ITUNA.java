@@ -245,6 +245,8 @@ public class ITUNA {
       }
     } else {
       ICUPList l1 = iCUPMap.get(parentPattern.get(0));
+      reconstructICUPList(l1);
+
       IUPList l2 = iUPMap.get(parentPattern.get(1).toArray(Integer[]::new)[0]);
 
       if (l1.size() > cList.getLateIndex(l1.getIds())

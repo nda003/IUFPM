@@ -3,7 +3,7 @@ package vn.datm.ituna;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import java.util.AbstractQueue;
+import com.google.common.collect.MinMaxPriorityQueue;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -14,7 +14,6 @@ import java.util.Set;
 
 public class ITUNA {
   private final int k;
-  // private MinMaxPriorityQueue<UItemSet> pq;
 
   private int currentTid = 0;
   private double minimumSupport = 0;
@@ -24,11 +23,6 @@ public class ITUNA {
 
   public ITUNA(int k) {
     this.k = k;
-    // pq =
-    //     MinMaxPriorityQueue.orderedBy(
-    //             Comparator.comparingDouble(UItemSet::getExpectedSupport).reversed())
-    //         .maximumSize(k)
-    //         .create();
   }
 
   public void addDatabase(UTDatabase db) {
@@ -47,73 +41,25 @@ public class ITUNA {
     }
   }
 
-  // public void debug() {
-  //   System.out.println(pq.getLast());
-  //   pq.add(iCUPMap.get(ImmutableSet.of(90, 56)).getItemSet());
-  //   System.out.println(pq.getLast());
-  // }
-
-  private List<UItemSet> toTopK(AbstractQueue<UItemSet> pq) {
-    return pq.stream()
-        .sorted(Comparator.comparingDouble(UItemSet::getExpectedSupport).reversed())
-        .toList();
-  }
-
   public List<UItemSet> mine() {
-    // if (pq.size() == 0) {
-    //   for (IUPList list : iUPMap.values()) {
-    //     pq.add(list.getItemSet());
-    //   }
-    // } else {
-    //   pq =
-    //       MinMaxPriorityQueue.orderedBy(
-    //               Comparator.comparingDouble(UItemSet::getExpectedSupport).reversed())
-    //           .maximumSize(k)
-    //           .create();
+    MinMaxPriorityQueue<UItemSet> pq =
+        MinMaxPriorityQueue.orderedBy(
+                Comparator.comparingDouble(UItemSet::getExpectedSupport).reversed())
+            .maximumSize(k)
+            .create();
 
-    //   // pq.clear();
+    pq.addAll(
+        Collections2.transform(
+            Collections2.filter(iUPMap.values(), (x) -> x.getExpectedSupport() >= minimumSupport),
+            IUPList::getItemSet));
 
-    //   for (IUPList list : iUPMap.values()) {
-    //     if (list.getExpectedSupport() >= minimumSupport) {
-    //       pq.add(list.getItemSet());
-    //     }
-    //   }
-
-    // pq.pollLast(); // DONOT REMOVE
-
-    // pq =
-    //     MinMaxPriorityQueue.orderedBy(
-    //             Comparator.comparingDouble(UItemSet::getExpectedSupport).reversed())
-    //         .maximumSize(k)
-    //         .create(pq);
-    // }
-
-    // MinMaxPriorityQueue<UItemSet> pq =
-    //     MinMaxPriorityQueue.orderedBy(
-    //             Comparator.comparingDouble(UItemSet::getExpectedSupport).reversed())
-    //         .maximumSize(k)
-    //         .create();
-    // TODO replace with a min-max heap
-    LimitedSortedList<UItemSet> pq =
-        new LimitedSortedList<>(
-            k, Comparator.comparingDouble(UItemSet::getExpectedSupport).reversed());
-
-    // for (IUPList list : iUPMap.values()) {
-    //   if (list.getExpectedSupport() >= minimumSupport) {
-    //     pq.add(list.getItemSet());
-    //   }
-    // }
-    pq.addAll(Collections2.transform(iUPMap.values(), IUPList::getItemSet));
-
-    // UItemSet polledSet = pq.pollFirst();
-    // pq.add(polledSet);
-    // System.out.println(pq);
-    // System.out.println(pq.getLast());
-
-    minimumSupport = Double.max(minimumSupport, pq.getLast().getExpectedSupport());
+    if (pq.size() >= k) {
+      minimumSupport = Double.max(minimumSupport, pq.peekLast().getExpectedSupport());
+    }
 
     List<Integer> idToTraverse =
         pq.stream()
+            .sorted(pq.comparator())
             .map((a) -> a.getIds().toArray(Integer[]::new)[0])
             .collect(ImmutableList.toImmutableList());
 
@@ -134,16 +80,22 @@ public class ITUNA {
 
               if (iCUPMap.get(pattern).getExpectedSupport() >= minimumSupport) {
                 pq.add(iCUPMap.get(pattern).getItemSet());
-                minimumSupport = pq.getLast().getExpectedSupport();
                 patternToTraverse.add(iCUPMap.get(pattern).getItemSet().getIds());
+
+                if (pq.size() >= k) {
+                  minimumSupport = pq.peekLast().getExpectedSupport();
+                }
               }
             } else {
               ICUPList iCUPList = constructICUPList(iUPList, jUPList);
 
               if (iCUPList.getExpectedSupport() >= minimumSupport) {
                 pq.add(iCUPList.getItemSet());
-                minimumSupport = pq.getLast().getExpectedSupport();
                 patternToTraverse.add(iCUPList.getItemSet().getIds());
+
+                if (pq.size() >= k) {
+                  minimumSupport = pq.peekLast().getExpectedSupport();
+                }
               }
             }
           }
@@ -155,11 +107,11 @@ public class ITUNA {
       }
     }
 
-    return pq.stream().toList();
+    return pq.stream().sorted(pq.comparator()).toList();
   }
 
   private void mine(
-      LimitedSortedList<UItemSet> pq,
+      MinMaxPriorityQueue<UItemSet> pq,
       List<Integer> idToTraverse,
       List<Set<Integer>> patternToTraverse,
       int fromIndex) {
@@ -190,16 +142,22 @@ public class ITUNA {
 
             if (iCUPMap.get(nextPattern).getExpectedSupport() >= minimumSupport) {
               pq.add(iCUPMap.get(nextPattern).getItemSet());
-              minimumSupport = pq.getLast().getExpectedSupport();
               nextPatternToTraverse.add(iCUPMap.get(nextPattern).getItemSet().getIds());
+
+              if (pq.size() >= k) {
+                minimumSupport = pq.peekLast().getExpectedSupport();
+              }
             }
           } else {
             ICUPList nextICUPList = constructICUPList(iCUPList, iUPList);
 
             if (nextICUPList.getExpectedSupport() >= minimumSupport) {
               pq.add(nextICUPList.getItemSet());
-              minimumSupport = pq.getLast().getExpectedSupport();
               nextPatternToTraverse.add(nextICUPList.getItemSet().getIds());
+
+              if (pq.size() >= k) {
+                minimumSupport = pq.peekLast().getExpectedSupport();
+              }
             }
           }
         }

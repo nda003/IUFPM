@@ -133,10 +133,6 @@ public class ICUPList {
                     lateIndexs.toString())
                 + pairs.get(0).toString());
 
-    for (int i = 1; i < pairs.size(); i++) {
-      sb.append(", " + pairs.get(i).toString());
-    }
-
     sb.append("])");
 
     return sb.toString();

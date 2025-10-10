@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import java.util.Set;
 
-public class UItemSet {
+public class UItemSet implements Comparable<UItemSet> {
   private final Set<Integer> ids;
   private double expectedSupport = 0;
 
@@ -55,5 +55,10 @@ public class UItemSet {
   @Override
   public int hashCode() {
     return ids.hashCode();
+  }
+
+  @Override
+  public int compareTo(UItemSet o) {
+    return Double.compare(this.expectedSupport, o.getExpectedSupport());
   }
 }

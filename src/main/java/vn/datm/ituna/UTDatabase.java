@@ -10,7 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UTDatabase {
-  private final List<ArrayList<UItem>> transactions = new ArrayList<ArrayList<UItem>>();
+  private List<ArrayList<UItem>> transactions = new ArrayList<ArrayList<UItem>>();
+
+  public UTDatabase() {}
+
+  private UTDatabase(List<ArrayList<UItem>> transactions) {
+    this.transactions = transactions;
+  }
 
   public void loadFile(String path) throws IOException {
     try (BufferedReader br = Files.newBufferedReader(Paths.get(path))) {
@@ -65,6 +71,36 @@ public class UTDatabase {
     return transactions;
   }
 
+  public UTDatabase[] split(float splitFactor) {
+    int splitAt = (int) (size() * splitFactor);
+
+    return new UTDatabase[] {
+      new UTDatabase(transactions.subList(0, splitAt)),
+      new UTDatabase(transactions.subList(splitAt, size()))
+    };
+  }
+
+  public int size() {
+    return transactions.size();
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+
+    for (List<UItem> transaction : transactions) {
+      sb.append(transaction.get(0).toString());
+
+      for (int i = 1; i < transaction.size(); i++) {
+        sb.append(" " + transaction.get(i).toString());
+      }
+
+      sb.append('\n');
+    }
+
+    return sb.toString();
+  }
+
   private ArrayList<UItem> processTransaction(String row) {
     String[] splitRow = row.split(":");
     String[] ids = splitRow[0].split("\\s+");
@@ -90,22 +126,5 @@ public class UTDatabase {
     }
 
     return transaction;
-  }
-
-  @Override
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-
-    for (List<UItem> transaction : transactions) {
-      sb.append(transaction.get(0).toString());
-
-      for (int i = 1; i < transaction.size(); i++) {
-        sb.append(" " + transaction.get(i).toString());
-      }
-
-      sb.append('\n');
-    }
-
-    return sb.toString();
   }
 }

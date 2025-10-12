@@ -171,23 +171,27 @@ public class ITUNA {
 
   private ICUPList constructICUPList(IUPList l1, IUPList l2) {
     ICUPList cList = new ICUPList(l1, l2);
+    int l2Index = 0;
 
     for (int i = 0; i < l1.size(); i++) {
       TPPair pair = l1.getTransationAt(i);
-      double oProb = l2.getTransationProbability(pair.tid());
+      int oIndex;
 
-      if (oProb > -1) {
-        cList.addTPPair(pair.tid(), pair.prob() * oProb);
+      oIndex = l2.getTransationIndex(pair.tid(), l2Index);
+
+      if (oIndex > -1) {
+        l2Index = oIndex + 1;
+        cList.addTPPair(pair.tid(), pair.prob() * l2.getTransationAt(oIndex).prob());
       }
 
-      cList.setLateIndex(l1.getId(), i);
+      cList.setLateIndex(l1.getId(), i + 1);
 
       if (minimumSupport - cList.getExpectedSupport() > (l1.size() - i) * l2.getMaxSupport()) {
         break;
       }
     }
 
-    cList.setLateIndex(l2.getId(), l2.size() - 1);
+    cList.setLateIndex(l2.getId(), l2Index);
 
     iCUPMap.put(cList.getItemSet().getIds(), cList);
     return cList;
@@ -195,13 +199,17 @@ public class ITUNA {
 
   private ICUPList constructICUPList(ICUPList l1, IUPList l2) {
     ICUPList cList = new ICUPList(l1, l2);
+    int l2Index = 0;
 
     for (int i = 0; i < l1.size(); i++) {
       TPPair pair = l1.getTransationAt(i);
-      double oProb = l2.getTransationProbability(pair.tid());
+      int oIndex;
 
-      if (oProb > -1) {
-        cList.addTPPair(pair.tid(), pair.prob() * oProb);
+      oIndex = l2.getTransationIndex(pair.tid(), l2Index);
+
+      if (oIndex > -1) {
+        l2Index = oIndex + 1;
+        cList.addTPPair(pair.tid(), pair.prob() * l2.getTransationAt(oIndex).prob());
       }
 
       cList.setLateIndex(l1.getIds(), i + 1);
@@ -211,7 +219,7 @@ public class ITUNA {
       }
     }
 
-    cList.setLateIndex(l2.getId(), l2.size());
+    cList.setLateIndex(l2.getId(), l2Index);
 
     iCUPMap.put(cList.getItemSet().getIds(), cList);
     return cList;
@@ -226,12 +234,17 @@ public class ITUNA {
 
       if (l1.size() > cList.getLateIndex(l1.getId())
           && l2.size() > cList.getLateIndex(l2.getId())) {
-        for (int i = cList.getLateIndex(l1.getId()) + 1; i < l1.size(); i++) {
-          TPPair pair = l1.getTransationAt(i);
-          double oProb = l2.getTransationProbability(pair.tid());
+        int l2Index = cList.getLateIndex(l2.getId());
 
-          if (oProb > -1) {
-            cList.addTPPair(pair.tid(), pair.prob() * oProb);
+        for (int i = cList.getLateIndex(l1.getId()); i < l1.size(); i++) {
+          TPPair pair = l1.getTransationAt(i);
+          int oIndex;
+
+          oIndex = l2.getTransationIndex(pair.tid(), l2Index);
+
+          if (oIndex > -1) {
+            l2Index = oIndex + 1;
+            cList.addTPPair(pair.tid(), pair.prob() * l2.getTransationAt(oIndex).prob());
           }
 
           cList.setLateIndex(l1.getId(), i + 1);
@@ -241,7 +254,7 @@ public class ITUNA {
           }
         }
 
-        cList.setLateIndex(l2.getId(), l2.size());
+        cList.setLateIndex(l2.getId(), l2Index);
       }
     } else {
       ICUPList l1 = iCUPMap.get(parentPattern.get(0));
@@ -251,12 +264,17 @@ public class ITUNA {
 
       if (l1.size() > cList.getLateIndex(l1.getIds())
           && l2.size() > cList.getLateIndex(l2.getId())) {
-        for (int i = cList.getLateIndex(l1.getIds()) + 1; i < l1.size(); i++) {
-          TPPair pair = l1.getTransationAt(i);
-          double oProb = l2.getTransationProbability(pair.tid());
+        int l2Index = cList.getLateIndex(l2.getId());
 
-          if (oProb > -1) {
-            cList.addTPPair(pair.tid(), pair.prob() * oProb);
+        for (int i = cList.getLateIndex(l1.getIds()); i < l1.size(); i++) {
+          TPPair pair = l1.getTransationAt(i);
+          int oIndex;
+
+          oIndex = l2.getTransationIndex(pair.tid(), l2Index);
+
+          if (oIndex > -1) {
+            l2Index = oIndex + 1;
+            cList.addTPPair(pair.tid(), pair.prob() * l2.getTransationAt(oIndex).prob());
           }
 
           cList.setLateIndex(l1.getIds(), i + 1);
@@ -266,7 +284,7 @@ public class ITUNA {
           }
         }
 
-        cList.setLateIndex(l2.getId(), l2.size());
+        cList.setLateIndex(l2.getId(), l2Index);
       }
     }
   }

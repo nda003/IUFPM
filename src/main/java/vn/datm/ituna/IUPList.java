@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class IUPList {
-  private static final int LINEAR_SEARCH_THRESHOLD = 1024;
+  private static final int LINEAR_SEARCH_THRESHOLD = 32;
 
   private int itemId;
   private double expectedSupport;
@@ -26,39 +26,6 @@ public class IUPList {
     }
 
     return pairs.add(new TPPair(tid, prob));
-  }
-
-  public ICUPList join(IUPList oList) {
-    ICUPList cList = new ICUPList(this, oList);
-
-    for (TPPair pair : pairs) {
-      double oProb = oList.getTransationProbability(pair.tid());
-
-      if (oProb > -1) {
-        cList.addTPPair(pair.tid(), pair.prob() * oProb);
-      }
-    }
-
-    return cList;
-  }
-
-  public ICUPList join(IUPList oList, double minimumSupport) {
-    ICUPList cList = new ICUPList(this, oList);
-
-    for (int i = 0; i < pairs.size(); i++) {
-      double oProb = oList.getTransationProbability(pairs.get(i).tid());
-
-      if (oProb > -1) {
-        cList.addTPPair(pairs.get(i).tid(), pairs.get(i).prob() * oProb);
-      }
-
-      if (minimumSupport - cList.getExpectedSupport()
-          > (pairs.size() - i) * oList.getMaxSupport()) {
-        break;
-      }
-    }
-
-    return cList;
   }
 
   public TPPair getTransationAt(int index) {
@@ -110,25 +77,43 @@ public class IUPList {
     return sb.toString();
   }
 
-  public double getTransationProbability(int tid) {
+  public int getTransationIndex(int tid) {
     if (pairs.size() <= LINEAR_SEARCH_THRESHOLD) {
-      return linearSearchTransationProbability(tid);
+      return linearSearchTransationIndex(tid);
     } else {
-      return binarySearchSearchTransationProbability(tid);
+      return binarySearchSearchTransationIndex(tid);
     }
   }
 
-  private double linearSearchTransationProbability(int tid) {
-    for (TPPair pair : pairs) {
-      if (pair.tid() == tid) {
-        return pair.prob();
+  public int getTransationIndex(int tid, int from) {
+    if (pairs.size() - from <= LINEAR_SEARCH_THRESHOLD) {
+      return linearSearchTransationIndex(tid, from);
+    } else {
+      return binarySearchSearchTransationIndex(tid, from);
+    }
+  }
+
+  private int linearSearchTransationIndex(int tid) {
+    for (int i = 0; i < pairs.size(); i++) {
+      if (pairs.get(i).tid() == tid) {
+        return i;
       }
     }
 
     return -1;
   }
 
-  private double binarySearchSearchTransationProbability(int tid) {
+  private int linearSearchTransationIndex(int tid, int from) {
+    for (int i = from; i < pairs.size(); i++) {
+      if (pairs.get(i).tid() == tid) {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
+  private int binarySearchSearchTransationIndex(int tid) {
     int left = 0;
     int right = pairs.size() - 1;
 
@@ -141,7 +126,27 @@ public class IUPList {
       } else if (midPairTID < tid) {
         left = mid + 1;
       } else {
-        return pairs.get(mid).prob();
+        return mid;
+      }
+    }
+
+    return -1;
+  }
+
+  private int binarySearchSearchTransationIndex(int tid, int from) {
+    int left = from;
+    int right = pairs.size() - 1;
+
+    while (left <= right) {
+      int mid = left + (right - left) / 2;
+      int midPairTID = pairs.get(mid).tid();
+
+      if (midPairTID > tid) {
+        right = mid - 1;
+      } else if (midPairTID < tid) {
+        left = mid + 1;
+      } else {
+        return mid;
       }
     }
 

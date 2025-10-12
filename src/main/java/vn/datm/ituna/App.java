@@ -25,21 +25,21 @@ public class App {
       e.printStackTrace();
     }
 
-    int k = 75;
+    int k = 100;
 
     UTDatabase[] dbs = db.split(0.8f);
 
-    ITUNA iTUNA = new ITUNA(k);
-    // testITUNA(iTUNA, dbs[0]);
-    // testITUNA(iTUNA, dbs[1]);
-    iTUNA.addDatabase(dbs[0]);
-    iTUNA.mine();
-    iTUNA.addDatabase(dbs[1]);
-    List<UItemSet> topK1 = iTUNA.mine();
+    ITUFP iTUFP = new ITUFP(k);
+    // testITUFP(ITUFP, dbs[0]);
+    // testITUFP(ITUFP, dbs[1]);
+    iTUFP.addDatabase(dbs[0]);
+    iTUFP.mine();
+    iTUFP.addDatabase(dbs[1]);
+    List<UItemSet> topK1 = iTUFP.mine();
 
-    ITUNA iTUNA2 = new ITUNA(k);
-    iTUNA2.addDatabase(db);
-    List<UItemSet> topK2 = iTUNA2.mine();
+    ITUFP iTUFP2 = new ITUFP(k);
+    iTUFP2.addDatabase(db);
+    List<UItemSet> topK2 = iTUFP2.mine();
 
     for (int i = 0; i < k; i++) {
       if (!topK1.get(i).getIds().equals(topK2.get(i).getIds())) {

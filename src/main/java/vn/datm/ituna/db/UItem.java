@@ -1,4 +1,4 @@
-package vn.datm.ituna;
+package vn.datm.ituna.db;
 
 public class UItem {
   private final int id;

@@ -1,0 +1,151 @@
+package vn.datm.ituna.iufpm;
+
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import vn.datm.ituna.util.CUPList;
+import vn.datm.ituna.util.TPPair;
+import vn.datm.ituna.util.UItemSet;
+import vn.datm.ituna.util.UPList;
+
+public class TUFP extends ITUFP {
+  public TUFP(int k) {
+    super(k);
+  }
+
+  public List<UItemSet> mine() {
+    LimitedSortedItemSets pq =
+        new LimitedSortedItemSets(
+            k, Comparator.comparingDouble(UItemSet::getExpectedSupport).reversed());
+
+    pq.addAll(
+        Collections2.transform(
+            Collections2.filter(
+                iUPMap.entrySet(), (x) -> x.getValue().getExpectedSupport() >= minimumSupport),
+            (x) -> new UItemSet(x.getKey(), x.getValue().getExpectedSupport())));
+
+    if (pq.size() >= k) {
+      minimumSupport = Double.max(minimumSupport, pq.getLast().getExpectedSupport());
+    }
+
+    List<Integer> idToTraverse =
+        new ImmutableList.Builder<Integer>()
+            .addAll(
+                Collections2.transform(pq.toList(), (a) -> a.getIds().toArray(Integer[]::new)[0]))
+            .build();
+
+    for (int i = 0; i < idToTraverse.size(); i++) {
+      int id = idToTraverse.get(i);
+      UPList iUPList = iUPMap.get(id);
+
+      if (iUPList.getExpectedSupport() >= minimumSupport) {
+        List<SimpleImmutableEntry<CUPList, Integer>> patternToTraverse = new ArrayList<>();
+
+        for (int j = i + 1; j < idToTraverse.size(); j++) {
+          int jd = idToTraverse.get(j);
+          UPList jUPList = iUPMap.get(jd);
+
+          if (jUPList.getExpectedSupport() * iUPList.getMaxSupport() >= minimumSupport) {
+            CUPList cupList = constructCUPList(id, iUPList, jd, jUPList);
+
+            if (cupList.getExpectedSupport() >= minimumSupport) {
+              pq.add(cupList.getItemSet());
+              patternToTraverse.add(new SimpleImmutableEntry<>(cupList, j));
+
+              if (pq.size() >= k) {
+                minimumSupport = pq.getLast().getExpectedSupport();
+              }
+            }
+          }
+        }
+
+        if (!patternToTraverse.isEmpty()) {
+          mine(pq, idToTraverse, patternToTraverse, i + 1);
+        }
+      }
+    }
+
+    return pq.toList();
+  }
+
+  private void mine(
+      LimitedSortedItemSets pq,
+      List<Integer> idToTraverse,
+      List<SimpleImmutableEntry<CUPList, Integer>> patternToTraverse,
+      int fromIndex) {
+    for (SimpleImmutableEntry<CUPList, Integer> pattern : patternToTraverse) {
+      List<SimpleImmutableEntry<CUPList, Integer>> nextPatternToTraverse = new ArrayList<>();
+
+      for (int i = pattern.getValue() + 1; i < idToTraverse.size(); i++) {
+        int id = idToTraverse.get(i);
+        UPList iUPList = iUPMap.get(id);
+
+        if (pattern.getKey().getExpectedSupport() * iUPList.getMaxSupport() >= minimumSupport) {
+          CUPList nextCUPList = constructCUPList(pattern.getKey(), id, iUPList);
+
+          if (nextCUPList.getExpectedSupport() >= minimumSupport) {
+            pq.add(nextCUPList.getItemSet());
+            nextPatternToTraverse.add(new SimpleImmutableEntry<>(nextCUPList, i));
+
+            if (pq.size() >= k) {
+              minimumSupport = pq.getLast().getExpectedSupport();
+            }
+          }
+        }
+      }
+
+      if (!nextPatternToTraverse.isEmpty()) {
+        mine(pq, idToTraverse, nextPatternToTraverse, fromIndex);
+      }
+    }
+  }
+
+  protected CUPList constructCUPList(int id1, UPList l1, int id2, UPList l2) {
+    CUPList cList = new CUPList(id1, id2);
+    int l2Index = 0;
+
+    for (int i = 0; i < l1.size(); i++) {
+      TPPair pair = l1.getTransationAt(i);
+      int oIndex;
+
+      oIndex = l2.getTransationIndex(pair.tid(), l2Index);
+
+      if (oIndex > -1) {
+        l2Index = oIndex + 1;
+        cList.addTPPair(pair.tid(), pair.prob() * l2.getTransationAt(oIndex).prob());
+      }
+
+      if (minimumSupport - cList.getExpectedSupport() > (l1.size() - i) * l2.getMaxSupport()) {
+        break;
+      }
+    }
+
+    return cList;
+  }
+
+  protected CUPList constructCUPList(CUPList l1, int id, UPList l2) {
+    CUPList cList = new CUPList(l1.getIds(), id);
+    int l2Index = 0;
+
+    for (int i = 0; i < l1.size(); i++) {
+      TPPair pair = l1.getTransationAt(i);
+      int oIndex;
+
+      oIndex = l2.getTransationIndex(pair.tid(), l2Index);
+
+      if (oIndex > -1) {
+        l2Index = oIndex + 1;
+        cList.addTPPair(pair.tid(), pair.prob() * l2.getTransationAt(oIndex).prob());
+      }
+
+      if (minimumSupport - cList.getExpectedSupport() > (l1.size() - i) * l2.getMaxSupport()) {
+        break;
+      }
+    }
+
+    return cList;
+  }
+}

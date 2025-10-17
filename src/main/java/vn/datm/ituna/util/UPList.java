@@ -1,18 +1,23 @@
-package vn.datm.ituna;
+package vn.datm.ituna.util;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class IUPList {
+public class UPList {
   private static final int LINEAR_SEARCH_THRESHOLD = 32;
 
-  private int itemId;
+  // private int itemId;
   private double expectedSupport;
   private double maxSupport;
   private List<TPPair> pairs = new ArrayList<>();
 
-  public IUPList(int itemId, int tid, double prob) {
-    this.itemId = itemId;
+  protected UPList() {
+    expectedSupport = 0;
+    maxSupport = 0;
+  }
+
+  public UPList(int itemId, int tid, double prob) {
+    // this.itemId = itemId;
     expectedSupport = prob;
     maxSupport = prob;
     pairs.add(new TPPair(tid, prob));
@@ -32,13 +37,13 @@ public class IUPList {
     return pairs.get(index);
   }
 
-  public UItemSet getItemSet() {
-    return new UItemSet(itemId, expectedSupport);
-  }
+  // public UItemSet getItemSet() {
+  //   return new UItemSet(itemId, expectedSupport);
+  // }
 
-  public int getId() {
-    return itemId;
-  }
+  // public int getId() {
+  //   return itemId;
+  // }
 
   public double getExpectedSupport() {
     return expectedSupport;
@@ -56,27 +61,6 @@ public class IUPList {
     return pairs.size();
   }
 
-  @Override
-  public String toString() {
-    if (isEmpty()) {
-      return String.format(
-          "([%d], expSup=%.2f, maxSup=%.2f, [])", itemId, expectedSupport, maxSupport);
-    }
-
-    StringBuilder sb =
-        new StringBuilder(
-            String.format("([%d], expSup=%.2f, maxSup=%.2f, [", itemId, expectedSupport, maxSupport)
-                + pairs.get(0).toString());
-
-    for (int i = 1; i < pairs.size(); i++) {
-      sb.append(", " + pairs.get(i).toString());
-    }
-
-    sb.append("])");
-
-    return sb.toString();
-  }
-
   public int getTransationIndex(int tid) {
     if (pairs.size() <= LINEAR_SEARCH_THRESHOLD) {
       return linearSearchTransationIndex(tid);
@@ -86,6 +70,14 @@ public class IUPList {
   }
 
   public int getTransationIndex(int tid, int from) {
+    if (from >= size()) {
+      return -1;
+    }
+
+    if (pairs.get(from).tid() == tid) {
+      return from;
+    }
+
     if (pairs.size() - from <= LINEAR_SEARCH_THRESHOLD) {
       return linearSearchTransationIndex(tid, from);
     } else {
@@ -152,4 +144,25 @@ public class IUPList {
 
     return -1;
   }
+
+  // @Override
+  // public String toString() {
+  //   if (isEmpty()) {
+  //     return String.format(
+  //         "([%d], expSup=%.2f, maxSup=%.2f, [])", itemId, expectedSupport, maxSupport);
+  //   }
+
+  //   StringBuilder sb =
+  //       new StringBuilder(
+  //           String.format("([%d], expSup=%.2f, maxSup=%.2f, [", itemId, expectedSupport, maxSupport)
+  //               + pairs.get(0).toString());
+
+  //   for (int i = 1; i < pairs.size(); i++) {
+  //     sb.append(", " + pairs.get(i).toString());
+  //   }
+
+  //   sb.append("])");
+
+  //   return sb.toString();
+  // }
 }

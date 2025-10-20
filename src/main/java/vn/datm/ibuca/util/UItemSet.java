@@ -1,40 +1,35 @@
 package vn.datm.ibuca.util;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import java.util.Set;
+import org.eclipse.collections.api.factory.primitive.IntSets;
+import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 
 public class UItemSet implements Comparable<UItemSet> {
-  private final Set<Integer> ids;
+  private final ImmutableIntSet ids;
   private double expectedSupport = 0;
 
   public UItemSet(int id, double probability) {
-    ids = ImmutableSet.of(id);
+    ids = IntSets.immutable.with(id);
     expectedSupport = probability;
   }
 
-  public UItemSet(Set<Integer> set, double probability) {
+  public UItemSet(ImmutableIntSet set, double probability) {
     ids = set;
     expectedSupport = probability;
   }
 
-  public UItemSet(int id1, int id2) {
-    ids = ImmutableSet.of(id1, id2);
-  }
+  // public UItemSet(int id1, int id2) {
+  //   ids = ImmutableSet.of(id1, id2);
+  // }
 
-  public UItemSet(Set<Integer> set, int id) {
-    ids = new ImmutableSet.Builder<Integer>().addAll(set).add(id).build();
-  }
-
-  public UItemSet(Set<Integer> ids1, Set<Integer> ids2) {
-    ids = Sets.union(ids1, ids2).immutableCopy();
-  }
+  // public UItemSet(Set<Integer> set, int id) {
+  //   ids = new ImmutableSet.Builder<Integer>().addAll(set).add(id).build();
+  // }
 
   public void addToExpectedSupport(double prob) {
     expectedSupport += prob;
   }
 
-  public Set<Integer> getIds() {
+  public ImmutableIntSet getIds() {
     return ids;
   }
 

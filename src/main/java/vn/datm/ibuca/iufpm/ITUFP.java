@@ -1,14 +1,14 @@
 package vn.datm.ibuca.iufpm;
 
-import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import org.eclipse.collections.api.factory.primitive.IntLists;
+import org.eclipse.collections.api.factory.primitive.IntSets;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.impl.map.mutable.UnifiedMap;
 import vn.datm.ibuca.util.ICUPList;
 import vn.datm.ibuca.util.TPPair;
@@ -16,7 +16,7 @@ import vn.datm.ibuca.util.UItemSet;
 import vn.datm.ibuca.util.UPList;
 
 public class ITUFP extends IUFPM {
-  protected Map<Set<Integer>, ICUPList> iCUPMap = new UnifiedMap<>();
+  private Map<ImmutableIntSet, ICUPList> icupMap = new UnifiedMap<>();
 
   public ITUFP(int k) {
     super(k);
@@ -28,40 +28,38 @@ public class ITUFP extends IUFPM {
             k, Comparator.comparingDouble(UItemSet::getExpectedSupport).reversed());
 
     pq.addAll(
-        Collections2.transform(
-            Collections2.filter(
-                iUPMap.entrySet(), (x) -> x.getValue().getExpectedSupport() >= minimumSupport),
-            (x) -> new UItemSet(x.getKey(), x.getValue().getExpectedSupport())));
+        iupMap
+            .keyValuesView()
+            .collectIf(
+                p -> p.getTwo().getExpectedSupport() >= minimumSupport,
+                p -> new UItemSet(p.getOne(), p.getTwo().getExpectedSupport())));
 
     if (pq.size() >= k) {
       minimumSupport = Double.max(minimumSupport, pq.getLast().getExpectedSupport());
     }
 
-    List<Integer> idToTraverse =
-        new ImmutableList.Builder<Integer>()
-            .addAll(
-                Collections2.transform(pq.toList(), (a) -> a.getIds().toArray(Integer[]::new)[0]))
-            .build();
+    ImmutableIntList idToTraverse =
+        IntLists.immutable.withAll(pq.toList().collect(x -> x.getIds().intIterator().next()));
 
     for (int i = 0; i < idToTraverse.size(); i++) {
       int id = idToTraverse.get(i);
-      UPList iUPList = iUPMap.get(id);
+      UPList iUPList = iupMap.get(id);
 
       if (iUPList.getExpectedSupport() >= minimumSupport) {
-        List<SimpleImmutableEntry<Set<Integer>, Integer>> patternToTraverse = new ArrayList<>();
+        List<SimpleImmutableEntry<ImmutableIntSet, Integer>> patternToTraverse = new ArrayList<>();
 
         for (int j = i + 1; j < idToTraverse.size(); j++) {
           int jd = idToTraverse.get(j);
-          UPList jUPList = iUPMap.get(idToTraverse.get(j));
+          UPList jUPList = iupMap.get(idToTraverse.get(j));
 
           if (jUPList.getExpectedSupport() * iUPList.getMaxSupport() >= minimumSupport) {
-            Set<Integer> pattern = ImmutableSet.of(id, jd);
+            ImmutableIntSet pattern = IntSets.immutable.with(id, jd);
 
-            if (iCUPMap.containsKey(pattern)) {
-              reconstructICUPList(iCUPMap.get(pattern));
+            if (icupMap.containsKey(pattern)) {
+              reconstructICUPList(icupMap.get(pattern));
 
-              if (iCUPMap.get(pattern).getExpectedSupport() >= minimumSupport) {
-                pq.add(new UItemSet(pattern, iCUPMap.get(pattern).getExpectedSupport()));
+              if (icupMap.get(pattern).getExpectedSupport() >= minimumSupport) {
+                pq.add(new UItemSet(pattern, icupMap.get(pattern).getExpectedSupport()));
                 patternToTraverse.add(new SimpleImmutableEntry<>(pattern, j));
 
                 if (pq.size() >= k) {
@@ -69,10 +67,11 @@ public class ITUFP extends IUFPM {
                 }
               }
             } else {
-              ICUPList iCUPList = constructICUPList(id, iUPList, jd, jUPList);
+              ICUPList icupList = constructICUPList(id, iUPList, jd, jUPList);
+              icupMap.put(pattern, icupList);
 
-              if (iCUPList.getExpectedSupport() >= minimumSupport) {
-                pq.add(new UItemSet(pattern, iCUPList.getExpectedSupport()));
+              if (icupList.getExpectedSupport() >= minimumSupport) {
+                pq.add(new UItemSet(pattern, icupList.getExpectedSupport()));
                 patternToTraverse.add(new SimpleImmutableEntry<>(pattern, j));
 
                 if (pq.size() >= k) {
@@ -94,30 +93,27 @@ public class ITUFP extends IUFPM {
 
   private void mine(
       LimitedSortedItemSets pq,
-      List<Integer> idToTraverse,
-      List<SimpleImmutableEntry<Set<Integer>, Integer>> patternToTraverse,
+      ImmutableIntList idToTraverse,
+      List<SimpleImmutableEntry<ImmutableIntSet, Integer>> patternToTraverse,
       int fromIndex) {
-    for (SimpleImmutableEntry<Set<Integer>, Integer> pattern : patternToTraverse) {
-      List<SimpleImmutableEntry<Set<Integer>, Integer>> nextPatternToTraverse = new ArrayList<>();
+    for (SimpleImmutableEntry<ImmutableIntSet, Integer> pattern : patternToTraverse) {
+      List<SimpleImmutableEntry<ImmutableIntSet, Integer>> nextPatternToTraverse =
+          new ArrayList<>();
 
-      ICUPList iCUPList = iCUPMap.get(pattern.getKey());
+      ICUPList iCUPList = icupMap.get(pattern.getKey());
 
       for (int i = pattern.getValue() + 1; i < idToTraverse.size(); i++) {
         int id = idToTraverse.get(i);
-        UPList iUPList = iUPMap.get(id);
+        UPList iUPList = iupMap.get(id);
 
         if (iCUPList.getExpectedSupport() * iUPList.getMaxSupport() >= minimumSupport) {
-          Set<Integer> nextPattern =
-              new ImmutableSet.Builder<Integer>()
-                  .addAll(pattern.getKey())
-                  .add(idToTraverse.get(i))
-                  .build();
+          ImmutableIntSet nextPattern = pattern.getKey().newWith(idToTraverse.get(i));
 
-          if (iCUPMap.containsKey(nextPattern)) {
-            reconstructICUPList(iCUPMap.get(nextPattern));
+          if (icupMap.containsKey(nextPattern)) {
+            reconstructICUPList(icupMap.get(nextPattern));
 
-            if (iCUPMap.get(nextPattern).getExpectedSupport() >= minimumSupport) {
-              pq.add(new UItemSet(nextPattern, iCUPMap.get(nextPattern).getExpectedSupport()));
+            if (icupMap.get(nextPattern).getExpectedSupport() >= minimumSupport) {
+              pq.add(new UItemSet(nextPattern, icupMap.get(nextPattern).getExpectedSupport()));
               nextPatternToTraverse.add(new SimpleImmutableEntry<>(nextPattern, i));
 
               if (pq.size() >= k) {
@@ -126,6 +122,7 @@ public class ITUFP extends IUFPM {
             }
           } else {
             ICUPList nextICUPList = constructICUPList(pattern.getKey(), iCUPList, id, iUPList);
+            icupMap.put(nextPattern, nextICUPList);
 
             if (nextICUPList.getExpectedSupport() >= minimumSupport) {
               pq.add(new UItemSet(nextPattern, nextICUPList.getExpectedSupport()));
@@ -169,12 +166,12 @@ public class ITUFP extends IUFPM {
 
     cList.setSecondIndex(l2Index);
 
-    iCUPMap.put(ImmutableSet.of(id1, id2), cList);
     return cList;
   }
 
-  protected ICUPList constructICUPList(Set<Integer> p, ICUPList l1, int id, UPList l2) {
+  protected ICUPList constructICUPList(ImmutableIntSet p, ICUPList l1, int id, UPList l2) {
     ICUPList cList = new ICUPList(p, id);
+
     int l2Index = 0;
 
     for (int i = 0; i < l1.size(); i++) {
@@ -197,14 +194,13 @@ public class ITUFP extends IUFPM {
 
     cList.setSecondIndex(l2Index);
 
-    iCUPMap.put(new ImmutableSet.Builder<Integer>().addAll(p).add(id).build(), cList);
     return cList;
   }
 
   protected void reconstructICUPList(ICUPList cList) {
     if (cList.getFirstParent().size() == 1) {
-      UPList l1 = iUPMap.get(cList.getFirstParent().iterator().next());
-      UPList l2 = iUPMap.get(cList.getSecondParent());
+      UPList l1 = iupMap.get(cList.getFirstParent().intIterator().next());
+      UPList l2 = iupMap.get(cList.getSecondParent());
 
       if (l1.size() > cList.getFirstIndex() && l2.size() > cList.getSecondIndex()) {
         int l2Index = cList.getSecondIndex();
@@ -230,10 +226,10 @@ public class ITUFP extends IUFPM {
         cList.setSecondIndex(l2Index);
       }
     } else {
-      ICUPList l1 = iCUPMap.get(cList.getFirstParent());
+      ICUPList l1 = icupMap.get(cList.getFirstParent());
       reconstructICUPList(l1);
 
-      UPList l2 = iUPMap.get(cList.getSecondParent());
+      UPList l2 = iupMap.get(cList.getSecondParent());
 
       if (l1.size() > cList.getFirstIndex() && l2.size() > cList.getSecondIndex()) {
         int l2Index = cList.getSecondIndex();

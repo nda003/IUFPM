@@ -2,7 +2,7 @@ package vn.datm.ibuca.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 
 public class CUPList {
   protected UItemSet itemSet;
@@ -15,7 +15,7 @@ public class CUPList {
     itemSet = new UItemSet(id1, id2);
   }
 
-  public CUPList(Set<Integer> p, int id) {
+  public CUPList(ImmutableIntSet p, int id) {
     itemSet = new UItemSet(p, id);
   }
 
@@ -33,7 +33,7 @@ public class CUPList {
     return itemSet;
   }
 
-  public Set<Integer> getIds() {
+  public ImmutableIntSet getIds() {
     return itemSet.getIds();
   }
 

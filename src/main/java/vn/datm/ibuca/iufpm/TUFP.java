@@ -1,11 +1,13 @@
 package vn.datm.ibuca.iufpm;
 
-import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableList;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+
+import org.eclipse.collections.api.factory.primitive.IntLists;
+import org.eclipse.collections.api.list.primitive.ImmutableIntList;
+
 import vn.datm.ibuca.util.CUPList;
 import vn.datm.ibuca.util.TPPair;
 import vn.datm.ibuca.util.UItemSet;
@@ -22,31 +24,29 @@ public class TUFP extends ITUFP {
             k, Comparator.comparingDouble(UItemSet::getExpectedSupport).reversed());
 
     pq.addAll(
-        Collections2.transform(
-            Collections2.filter(
-                iUPMap.entrySet(), (x) -> x.getValue().getExpectedSupport() >= minimumSupport),
-            (x) -> new UItemSet(x.getKey(), x.getValue().getExpectedSupport())));
+        iupMap
+            .keyValuesView()
+            .collectIf(
+                p -> p.getTwo().getExpectedSupport() >= minimumSupport,
+                p -> new UItemSet(p.getOne(), p.getTwo().getExpectedSupport())));
 
     if (pq.size() >= k) {
       minimumSupport = Double.max(minimumSupport, pq.getLast().getExpectedSupport());
     }
 
-    List<Integer> idToTraverse =
-        new ImmutableList.Builder<Integer>()
-            .addAll(
-                Collections2.transform(pq.toList(), (a) -> a.getIds().toArray(Integer[]::new)[0]))
-            .build();
+    ImmutableIntList idToTraverse =
+        IntLists.immutable.withAll(pq.toList().collect(x -> x.getIds().intIterator().next()));
 
     for (int i = 0; i < idToTraverse.size(); i++) {
       int id = idToTraverse.get(i);
-      UPList iUPList = iUPMap.get(id);
+      UPList iUPList = iupMap.get(id);
 
       if (iUPList.getExpectedSupport() >= minimumSupport) {
         List<SimpleImmutableEntry<CUPList, Integer>> patternToTraverse = new ArrayList<>();
 
         for (int j = i + 1; j < idToTraverse.size(); j++) {
           int jd = idToTraverse.get(j);
-          UPList jUPList = iUPMap.get(jd);
+          UPList jUPList = iupMap.get(jd);
 
           if (jUPList.getExpectedSupport() * iUPList.getMaxSupport() >= minimumSupport) {
             CUPList cupList = constructCUPList(id, iUPList, jd, jUPList);
@@ -73,7 +73,7 @@ public class TUFP extends ITUFP {
 
   private void mine(
       LimitedSortedItemSets pq,
-      List<Integer> idToTraverse,
+      ImmutableIntList idToTraverse,
       List<SimpleImmutableEntry<CUPList, Integer>> patternToTraverse,
       int fromIndex) {
     for (SimpleImmutableEntry<CUPList, Integer> pattern : patternToTraverse) {
@@ -81,7 +81,7 @@ public class TUFP extends ITUFP {
 
       for (int i = pattern.getValue() + 1; i < idToTraverse.size(); i++) {
         int id = idToTraverse.get(i);
-        UPList iUPList = iUPMap.get(id);
+        UPList iUPList = iupMap.get(id);
 
         if (pattern.getKey().getExpectedSupport() * iUPList.getMaxSupport() >= minimumSupport) {
           CUPList nextCUPList = constructCUPList(pattern.getKey(), id, iUPList);

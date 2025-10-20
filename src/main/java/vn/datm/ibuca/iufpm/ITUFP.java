@@ -1,4 +1,4 @@
-package vn.datm.ituna.iufpm;
+package vn.datm.ibuca.iufpm;
 
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
@@ -6,17 +6,17 @@ import com.google.common.collect.ImmutableSet;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import vn.datm.ituna.util.ICUPList;
-import vn.datm.ituna.util.TPPair;
-import vn.datm.ituna.util.UItemSet;
-import vn.datm.ituna.util.UPList;
+import org.eclipse.collections.impl.map.mutable.UnifiedMap;
+import vn.datm.ibuca.util.ICUPList;
+import vn.datm.ibuca.util.TPPair;
+import vn.datm.ibuca.util.UItemSet;
+import vn.datm.ibuca.util.UPList;
 
 public class ITUFP extends IUFPM {
-  protected Map<Set<Integer>, ICUPList> iCUPMap = new HashMap<>();
+  protected Map<Set<Integer>, ICUPList> iCUPMap = new UnifiedMap<>();
 
   public ITUFP(int k) {
     super(k);

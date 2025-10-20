@@ -3,19 +3,19 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>vn.datm.ituna</groupId>
-  <artifactId>ituna</artifactId>
+  <groupId>vn.datm.ibuca</groupId>
+  <artifactId>ibuca</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>ituna</name>
+  <name>ibuca</name>
   <!-- FIXME change it to the project's website -->
   <url>http://www.example.com</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>21</maven.compiler.release>
-    <uberjar.name>benchmarks</uberjar.name>
+    <uberjar.name>ibucaBenchmarks</uberjar.name>
   </properties>
 
   <dependencyManagement>
@@ -48,9 +48,19 @@
       <version>33.5.0-jre</version>
     </dependency>
     <dependency>
-      <groupId>org.openjdk.jol</groupId>
-      <artifactId>jol-core</artifactId>
-      <version>0.17</version>
+      <groupId>args4j</groupId>
+      <artifactId>args4j</artifactId>
+      <version>2.37</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.collections</groupId>
+      <artifactId>eclipse-collections-api</artifactId>
+      <version>13.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.collections</groupId>
+      <artifactId>eclipse-collections</artifactId>
+      <version>13.0.0</version>
     </dependency>
   </dependencies>
 
@@ -80,14 +90,24 @@
               <transformers>
                 <transformer
                   implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-            			<mainClass>vn.datm.ituna.App</mainClass>
-                  <manifestEntries>
-                    <Premain-Class>org.openjdk.jol.vm.InstrumentationSupport</Premain-Class>
-                    <Launcher-Agent-Class>org.openjdk.jol.vm.InstrumentationSupport$Installer</Launcher-Agent-Class>
-                  </manifestEntries>
+            			<mainClass>vn.datm.ibuca.App</mainClass>
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
               </transformers>
+              <filters>
+                <filter>
+                <!--
+                  Shading signed JARs will fail without this.
+                  http://stackoverflow.com/questions/999489/invalid-signature-file-when-attempting-to-run-a-jar
+                -->
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
             </configuration>
           </execution>
         </executions>
@@ -116,7 +136,7 @@
           	<archive>
           		<manifest>
           			<addClasspath>true</addClasspath>
-          			<mainClass>vn.datm.ituna.App</mainClass>
+          			<mainClass>vn.datm.ibuca.App</mainClass>
           		</manifest>
           	</archive>
           </configuration>

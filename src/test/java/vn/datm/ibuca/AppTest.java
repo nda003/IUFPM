@@ -1,4 +1,4 @@
-package vn.datm.ituna;
+package vn.datm.ibuca;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

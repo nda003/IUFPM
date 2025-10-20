@@ -1,4 +1,4 @@
-package vn.datm.ituna.util;
+package vn.datm.ibuca.util;
 
 public record TPPair(int tid, double prob) {
   @Override

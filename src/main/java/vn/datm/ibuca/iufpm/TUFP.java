@@ -1,4 +1,4 @@
-package vn.datm.ituna.iufpm;
+package vn.datm.ibuca.iufpm;
 
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
@@ -6,10 +6,10 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import vn.datm.ituna.util.CUPList;
-import vn.datm.ituna.util.TPPair;
-import vn.datm.ituna.util.UItemSet;
-import vn.datm.ituna.util.UPList;
+import vn.datm.ibuca.util.CUPList;
+import vn.datm.ibuca.util.TPPair;
+import vn.datm.ibuca.util.UItemSet;
+import vn.datm.ibuca.util.UPList;
 
 public class TUFP extends ITUFP {
   public TUFP(int k) {

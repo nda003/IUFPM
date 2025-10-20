@@ -1,4 +1,4 @@
-package vn.datm.ituna.iufpm;
+package vn.datm.ibuca.iufpm;
 
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
@@ -6,22 +6,23 @@ import com.google.common.collect.ImmutableSet;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import vn.datm.ituna.db.UItem;
-import vn.datm.ituna.db.UTDatabase;
-import vn.datm.ituna.util.SCUP;
-import vn.datm.ituna.util.SUP;
-import vn.datm.ituna.util.TPPair;
-import vn.datm.ituna.util.UItemSet;
+import org.eclipse.collections.impl.list.mutable.FastList;
+import org.eclipse.collections.impl.map.mutable.UnifiedMap;
+import vn.datm.ibuca.db.UItem;
+import vn.datm.ibuca.db.UTDatabase;
+import vn.datm.ibuca.util.SCUP;
+import vn.datm.ibuca.util.SUP;
+import vn.datm.ibuca.util.TPPair;
+import vn.datm.ibuca.util.UItemSet;
 
 public class IBUCA extends IUFPM {
   private int increment = 0;
-  private ArrayList<TPPair> pairs = new ArrayList<>();
-  private Map<Integer, SUP> supMap = new HashMap<>();
-  private Map<Set<Integer>, SCUP> scupMap = new HashMap<>();
+  private List<TPPair> pairs = new FastList<>();
+  private Map<Integer, SUP> supMap = new UnifiedMap<>();
+  private Map<Set<Integer>, SCUP> scupMap = new UnifiedMap<>();
 
   public IBUCA(int k) {
     super(k);
@@ -29,7 +30,7 @@ public class IBUCA extends IUFPM {
 
   @Override
   public void addDatabase(UTDatabase db) {
-    Map<Integer, List<TPPair>> pairMap = new HashMap<>();
+    Map<Integer, List<TPPair>> pairMap = new UnifiedMap<>();
 
     for (ArrayList<UItem> transation : db.getTransactions()) {
       for (UItem uItem : transation) {
@@ -42,7 +43,7 @@ public class IBUCA extends IUFPM {
         }
 
         if (!pairMap.containsKey(id)) {
-          pairMap.put(id, new ArrayList<>());
+          pairMap.put(id, new FastList<>());
         }
 
         pairMap.get(id).add(new TPPair(currentTid, uItem.getProbability()));
@@ -187,49 +188,57 @@ public class IBUCA extends IUFPM {
   private SCUP constructSCUP(int id1, SUP s1, int id2, SUP s2) {
     SCUP scup = new SCUP(id1, id2);
     int segmentSize = 0;
+    List<TPPair> bufferedPairs = new FastList<>();
 
-    for (Map.Entry<Integer, int[]> entry : s1.getIncrementSegments().sequencedEntrySet()) {
-      if (!s2.containIncrement(entry.getKey())) {
-        segmentSize += entry.getValue()[1] - entry.getValue()[0] + 1;
+    for (Map.Entry<Integer, int[]> entry : s1.getIncrementSegments().entrySet()) {
+      int inc = entry.getKey();
+      int[] s1Segment = entry.getValue();
+
+      if (!s2.containIncrement(inc)) {
+        segmentSize += s1Segment[1] - s1Segment[0] + 1;
         continue;
       }
 
-      int scupSegmentStart = pairs.size();
+      int scupSegmentStart = bufferedPairs.size();
 
-      int[] s2Segment = s2.getSegmentAt(entry.getKey());
+      int[] s2Segment = s2.getSegmentAt(inc);
+
       int s2Index = s2Segment[0];
 
       boolean ppf = false;
 
-      for (int j = entry.getValue()[0]; j <= entry.getValue()[1]; j++) {
+      for (int j = s1Segment[0]; j <= s1Segment[1]; j++) {
         TPPair pair = pairs.get(j);
-        int oIndex = search(pair.tid(), s2Segment, s2Index);
+        int oIndex = search(pair.tid(), s2Index, s2Segment[1]);
 
         if (oIndex > -1) {
           s2Index = oIndex + 1;
           double prob = pair.prob() * pairs.get(oIndex).prob();
-          pairs.add(new TPPair(pair.tid(), prob));
+          bufferedPairs.add(new TPPair(pair.tid(), prob));
           scup.accept(prob);
         }
 
         scup.setFirstIndex(j + 1);
 
         if (minimumSupport - scup.getExpectedSupport()
-            > (s1.size() - (j - entry.getValue()[0] + segmentSize)) * s2.getMaxSupport()) {
+            > (s1.size() - (j - s1Segment[0] + segmentSize)) * s2.getMaxSupport()) {
           ppf = true;
           break;
         }
       }
 
-      scup.addPos(entry.getKey(), scupSegmentStart, pairs.size() - 1);
+      scup.addPos(inc, pairs.size() + scupSegmentStart, pairs.size() + bufferedPairs.size() - 1);
+
       scup.setSecondIndex(s2Index);
 
       if (ppf) {
         break;
       }
 
-      segmentSize += entry.getValue()[1] - entry.getValue()[0] + 1;
+      segmentSize += s1Segment[1] - s1Segment[0] + 1;
     }
+
+    pairs.addAll(bufferedPairs);
 
     return scup;
   }
@@ -238,6 +247,7 @@ public class IBUCA extends IUFPM {
     SCUP scup = new SCUP(p, id);
     int segmentSize = 0;
     int s2Index = -1;
+    List<TPPair> bufferedPairs = new FastList<>();
 
     for (int[] inSeg : s1.getIncrementSegments()) {
       if (!s2.containIncrement(inSeg[0])) {
@@ -245,21 +255,22 @@ public class IBUCA extends IUFPM {
         continue;
       }
 
-      int scupSegmentStart = pairs.size();
+      int scupSegmentStart = bufferedPairs.size();
 
       int[] s2Segment = s2.getSegmentAt(inSeg[0]);
       s2Index = Math.max(s2Index, s2Segment[0]);
+      int s2End = s2Segment[1];
 
       boolean ppf = false;
 
       for (int j = inSeg[1]; j <= inSeg[2]; j++) {
         TPPair pair = pairs.get(j);
-        int oIndex = search(pair.tid(), s2Segment, s2Index);
+        int oIndex = search(pair.tid(), s2Index, s2End);
 
         if (oIndex > -1) {
           s2Index = oIndex + 1;
           double prob = pair.prob() * pairs.get(oIndex).prob();
-          pairs.add(new TPPair(pair.tid(), prob));
+          bufferedPairs.add(new TPPair(pair.tid(), prob));
           scup.accept(prob);
         }
 
@@ -272,7 +283,9 @@ public class IBUCA extends IUFPM {
         }
       }
 
-      scup.addPos(inSeg[0], scupSegmentStart, pairs.size() - 1);
+      scup.addPos(
+          inSeg[0], pairs.size() + scupSegmentStart, pairs.size() + bufferedPairs.size() - 1);
+
       scup.setSecondIndex(s2Index);
 
       if (ppf) {
@@ -282,6 +295,8 @@ public class IBUCA extends IUFPM {
       segmentSize += inSeg[2] - inSeg[1] + 1;
     }
 
+    pairs.addAll(bufferedPairs);
+
     return scup;
   }
 
@@ -290,18 +305,9 @@ public class IBUCA extends IUFPM {
     int firstIndex = scup.getFirstIndex();
     int secondIndex = scup.getSecondIndex();
 
-    // if (new ImmutableSet.Builder<Integer>()
-    //     .addAll(scup.getFirstParent())
-    //     .add(scup.getSecondParent())
-    //     .build()
-    //     .equals(ImmutableSet.of(12, 90, 94))) {
-    //   System.out.println(scupMap.get(ImmutableSet.of(12, 90, 94)));
-    // }
-
     if (scup.getFirstParent().size() == 1) {
       SUP s1 = supMap.get(scup.getFirstParent().iterator().next());
       SUP s2 = supMap.get(scup.getSecondParent());
-
       Map.Entry<Integer, int[]> s1LastSegment = s1.getLastSegment();
       Map.Entry<Integer, int[]> s2LastSegment = s2.getLastSegment();
 
@@ -312,49 +318,58 @@ public class IBUCA extends IUFPM {
 
         int segmentSize = 0;
         int s2Index = secondIndex;
+        List<TPPair> bufferedPairs = new FastList<>();
 
         for (Map.Entry<Integer, int[]> entry : s1.getIncrementSegments().sequencedEntrySet()) {
-          if (entry.getKey() < lastSegment[0] || !s2.containIncrement(entry.getKey())) {
-            segmentSize += entry.getValue()[1] - entry.getValue()[0] + 1;
+          int inc = entry.getKey();
+          int[] s1Segment = entry.getValue();
+
+          if (inc < lastSegment[0] || !s2.containIncrement(inc)) {
+            segmentSize += s1Segment[1] - s1Segment[0] + 1;
             continue;
           }
 
-          int scupSegmentStart = pairs.size();
+          int scupSegmentStart = bufferedPairs.size();
 
           int[] s2Segment = s2.getSegmentAt(entry.getKey());
           s2Index = Math.max(s2Segment[0], s2Index);
+          int s2End = s2Segment[1];
 
           boolean ppf = false;
 
-          for (int j = Math.max(entry.getValue()[0], firstIndex); j <= entry.getValue()[1]; j++) {
+          for (int j = Math.max(s1Segment[0], firstIndex); j <= s1Segment[1]; j++) {
             TPPair pair = pairs.get(j);
-            int oIndex = search(pair.tid(), s2Segment, s2Index);
+            int oIndex = search(pair.tid(), s2Index, s2End);
 
             if (oIndex > -1) {
               s2Index = oIndex + 1;
               double prob = pair.prob() * pairs.get(oIndex).prob();
-              pairs.add(new TPPair(pair.tid(), prob));
+              bufferedPairs.add(new TPPair(pair.tid(), prob));
               scup.accept(prob);
             }
 
             scup.setFirstIndex(j + 1);
 
             if (minimumSupport - scup.getExpectedSupport()
-                > (s1.size() - (j - entry.getValue()[0] + segmentSize)) * s2.getMaxSupport()) {
+                > (s1.size() - (j - s1Segment[0] + segmentSize)) * s2.getMaxSupport()) {
               ppf = true;
               break;
             }
           }
 
-          scup.addPos(entry.getKey(), scupSegmentStart, pairs.size() - 1);
+          scup.addPos(
+              inc, pairs.size() + scupSegmentStart, pairs.size() + bufferedPairs.size() - 1);
+
           scup.setSecondIndex(s2Index);
 
           if (ppf) {
             break;
           }
 
-          segmentSize += entry.getValue()[1] - entry.getValue()[0] + 1;
+          segmentSize += s1Segment[1] - s1Segment[0] + 1;
         }
+
+        pairs.addAll(bufferedPairs);
       }
     } else {
       SCUP s1 = scupMap.get(scup.getFirstParent());
@@ -372,6 +387,7 @@ public class IBUCA extends IUFPM {
 
         int segmentSize = 0;
         int s2Index = secondIndex;
+        List<TPPair> bufferedPairs = new FastList<>();
 
         for (int[] inSeg : s1.getIncrementSegments()) {
           if (inSeg[0] < lastSegment[0] || !s2.containIncrement(inSeg[0])) {
@@ -379,7 +395,7 @@ public class IBUCA extends IUFPM {
             continue;
           }
 
-          int scupSegmentStart = pairs.size();
+          int scupSegmentStart = bufferedPairs.size();
 
           int[] s2Segment = s2.getSegmentAt(inSeg[0]);
           s2Index = Math.max(s2Segment[0], s2Index);
@@ -388,12 +404,12 @@ public class IBUCA extends IUFPM {
 
           for (int j = Math.max(inSeg[1], firstIndex); j <= inSeg[2]; j++) {
             TPPair pair = pairs.get(j);
-            int oIndex = search(pair.tid(), s2Segment, s2Index);
+            int oIndex = search(pair.tid(), s2Index, s2Segment[1]);
 
             if (oIndex > -1) {
               s2Index = oIndex + 1;
               double prob = pair.prob() * pairs.get(oIndex).prob();
-              pairs.add(new TPPair(pair.tid(), prob));
+              bufferedPairs.add(new TPPair(pair.tid(), prob));
               scup.accept(prob);
             }
 
@@ -406,7 +422,9 @@ public class IBUCA extends IUFPM {
             }
           }
 
-          scup.addPos(inSeg[0], scupSegmentStart, pairs.size() - 1);
+          scup.addPos(
+              inSeg[0], pairs.size() + scupSegmentStart, pairs.size() + bufferedPairs.size() - 1);
+
           scup.setSecondIndex(s2Index);
 
           if (ppf) {
@@ -415,36 +433,38 @@ public class IBUCA extends IUFPM {
 
           segmentSize += inSeg[2] - inSeg[1] + 1;
         }
+
+        pairs.addAll(bufferedPairs);
       }
     }
   }
 
-  private int search(int tid, int[] segment, int fromIndex) {
-    if (fromIndex > segment[1]) {
+  private int search(int tid, int start, int end) {
+    if (start > end) {
       return -1;
     }
 
-    if (pairs.get(fromIndex).tid() <= tid && tid <= pairs.get(segment[1]).tid()) {
-      if (pairs.get(fromIndex).tid() == tid) {
-        return fromIndex;
+    if (pairs.get(start).tid() <= tid && tid <= pairs.get(end).tid()) {
+      if (pairs.get(start).tid() == tid) {
+        return start;
       }
 
-      if (pairs.get(segment[1]).tid() == tid) {
-        return segment[1];
+      if (pairs.get(end).tid() == tid) {
+        return end;
       }
 
-      if (segment[1] - fromIndex + 1 < 32) {
-        return linearSearch(tid, segment, fromIndex);
+      if (end - start + 1 < 32) {
+        return linearSearch(tid, start, end);
       } else {
-        return binarySearch(tid, segment, fromIndex);
+        return binarySearch(tid, start, end);
       }
     }
 
     return -1;
   }
 
-  private int linearSearch(int tid, int[] segment, int fromIndex) {
-    for (int i = fromIndex; i <= segment[1]; i++) {
+  private int linearSearch(int tid, int start, int end) {
+    for (int i = start; i <= end; i++) {
       if (pairs.get(i).tid() == tid) {
         return i;
       }
@@ -453,9 +473,9 @@ public class IBUCA extends IUFPM {
     return -1;
   }
 
-  private int binarySearch(int tid, int[] segment, int fromIndex) {
-    int left = fromIndex;
-    int right = segment[1];
+  private int binarySearch(int tid, int start, int end) {
+    int left = start;
+    int right = end;
 
     while (left <= right) {
       int mid = left + (right - left) / 2;

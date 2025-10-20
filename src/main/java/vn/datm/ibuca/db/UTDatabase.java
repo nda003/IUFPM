@@ -1,71 +1,63 @@
-package vn.datm.ituna.db;
+package vn.datm.ibuca.db;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UTDatabase {
   private List<ArrayList<UItem>> transactions = new ArrayList<ArrayList<UItem>>();
 
-  public UTDatabase() {}
+  private UTDatabase() {}
 
   private UTDatabase(List<ArrayList<UItem>> transactions) {
     this.transactions = transactions;
   }
 
-  public void loadFile(String path) throws IOException {
-    try (BufferedReader br = Files.newBufferedReader(Paths.get(path))) {
+  public static UTDatabase fromFile(Path path) throws IOException {
+    UTDatabase db = new UTDatabase();
+
+    try (BufferedReader br = Files.newBufferedReader(path)) {
       String row;
 
       while ((row = br.readLine()) != null) {
         if (row.isEmpty()) continue;
 
-        ArrayList<UItem> transaction = processTransaction(row);
+        ArrayList<UItem> transaction = db.processTransaction(row);
 
         if (transaction != null) {
-          transactions.add(transaction);
+          db.transactions.add(transaction);
         }
       }
     }
+
+    return db;
   }
 
-  public void readInputStream(InputStream is) throws IOException {
+  public static UTDatabase fromInputStream(InputStream is) throws IOException {
+    UTDatabase db = new UTDatabase();
+
     try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
       String row;
 
       while ((row = br.readLine()) != null) {
         if (row.isEmpty()) continue;
 
-        ArrayList<UItem> transaction = processTransaction(row);
+        ArrayList<UItem> transaction = db.processTransaction(row);
 
         if (transaction != null) {
-          transactions.add(transaction);
+          db.transactions.add(transaction);
         }
       }
     }
+
+    return db;
   }
 
-  public void readInputStream(InputStream is, int nLines) throws IOException {
-    try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
-      String row;
-      int iLine = 0;
-
-      while ((row = br.readLine()) != null && ++iLine < nLines) {
-        if (row.isEmpty()) continue;
-
-        ArrayList<UItem> transaction = processTransaction(row);
-
-        if (transaction != null) {
-          transactions.add(transaction);
-        }
-      }
-    }
-  }
 
   public List<ArrayList<UItem>> getTransactions() {
     return transactions;

@@ -1,4 +1,4 @@
-package vn.datm.ituna.util;
+package vn.datm.ibuca.util;
 
 public record Segment(int start, int end) {
   @Override

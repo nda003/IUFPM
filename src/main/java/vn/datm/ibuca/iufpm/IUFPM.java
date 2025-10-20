@@ -1,16 +1,16 @@
-package vn.datm.ituna.iufpm;
+package vn.datm.ibuca.iufpm;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import vn.datm.ituna.db.UItem;
-import vn.datm.ituna.db.UTDatabase;
-import vn.datm.ituna.util.UItemSet;
-import vn.datm.ituna.util.UPList;
+import org.eclipse.collections.impl.map.mutable.UnifiedMap;
+import vn.datm.ibuca.db.UItem;
+import vn.datm.ibuca.db.UTDatabase;
+import vn.datm.ibuca.util.UItemSet;
+import vn.datm.ibuca.util.UPList;
 
 public abstract class IUFPM {
   protected class LimitedSortedItemSets {
@@ -65,7 +65,7 @@ public abstract class IUFPM {
   protected int currentTid = 0;
   protected double minimumSupport = 0;
 
-  protected Map<Integer, UPList> iUPMap = new HashMap<>();
+  protected Map<Integer, UPList> iUPMap = new UnifiedMap<>();
 
   protected IUFPM(int k) {
     this.k = k;

@@ -1,7 +1,7 @@
-package vn.datm.ituna.util;
+package vn.datm.ibuca.util;
 
-import java.util.ArrayList;
 import java.util.List;
+import org.eclipse.collections.impl.list.mutable.FastList;
 
 public class UPList {
   private static final int LINEAR_SEARCH_THRESHOLD = 32;
@@ -9,7 +9,7 @@ public class UPList {
   // private int itemId;
   private double expectedSupport;
   private double maxSupport;
-  private List<TPPair> pairs = new ArrayList<>();
+  private List<TPPair> pairs = new FastList<>();
 
   protected UPList() {
     expectedSupport = 0;
@@ -154,7 +154,8 @@ public class UPList {
 
   //   StringBuilder sb =
   //       new StringBuilder(
-  //           String.format("([%d], expSup=%.2f, maxSup=%.2f, [", itemId, expectedSupport, maxSupport)
+  //           String.format("([%d], expSup=%.2f, maxSup=%.2f, [", itemId, expectedSupport,
+  // maxSupport)
   //               + pairs.get(0).toString());
 
   //   for (int i = 1; i < pairs.size(); i++) {

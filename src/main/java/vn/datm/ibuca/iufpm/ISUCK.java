@@ -23,8 +23,8 @@ import vn.datm.ibuca.util.UItemSet;
 
 public class ISUCK extends IUFPM {
   private int currentIncrement = 0;
-  private MutableIntObjectMap<ISUPList> supMap = new IntObjectHashMap<>();
-  private Map<ImmutableIntSet, ISCUPList> scupMap = new UnifiedMap<>();
+  private MutableIntObjectMap<ISUPList> isupMap = new IntObjectHashMap<>();
+  private Map<ImmutableIntSet, ISCUPList> iscupMap = new UnifiedMap<>();
 
   public ISUCK(int k) {
     super(k);
@@ -42,10 +42,10 @@ public class ISUCK extends IUFPM {
           changedIds.add(id);
         }
 
-        if (supMap.containsKey(id)) {
-          supMap.get(id).addPair(currentTid, uItem.getProbability());
+        if (isupMap.containsKey(id)) {
+          isupMap.get(id).addPair(currentTid, uItem.getProbability());
         } else {
-          supMap.put(id, new ISUPList(currentTid, uItem.getProbability()));
+          isupMap.put(id, new ISUPList(currentTid, uItem.getProbability()));
         }
       }
 
@@ -53,7 +53,7 @@ public class ISUCK extends IUFPM {
     }
 
     for (int id : changedIds) {
-      supMap.get(id).putIncrement(currentIncrement);
+      isupMap.get(id).putIncrement(currentIncrement);
     }
 
     currentIncrement++;
@@ -66,7 +66,7 @@ public class ISUCK extends IUFPM {
             k, Comparator.comparingDouble(UItemSet::getExpectedSupport).reversed());
 
     pq.addAll(
-        supMap
+        isupMap
             .keyValuesView()
             .collectIf(
                 p -> p.getTwo().getExpectedSupport() >= minimumSupport,
@@ -80,24 +80,23 @@ public class ISUCK extends IUFPM {
         IntLists.immutable.withAll(pq.toList().collect(x -> x.getIds().intIterator().next()));
 
     for (int i = 0; i < idToTraverse.size(); i++) {
-      ISUPList isup = supMap.get(idToTraverse.get(i));
+      ISUPList isup = isupMap.get(idToTraverse.get(i));
 
       if (isup.getExpectedSupport() >= minimumSupport) {
         List<SimpleImmutableEntry<ImmutableIntSet, Integer>> patternToTraverse = new ArrayList<>();
 
         for (int j = i + 1; j < idToTraverse.size(); j++) {
-          ISUPList jsup = supMap.get(idToTraverse.get(j));
+          ISUPList jsup = isupMap.get(idToTraverse.get(j));
 
           if (jsup.getExpectedSupport() * isup.getMaxSupport() >= minimumSupport) {
-            // Set<Integer> pattern = ImmutableSet.of(idToTraverse.get(i), idToTraverse.get(j));
             ImmutableIntSet pattern =
                 IntSets.immutable.with(idToTraverse.get(i), idToTraverse.get(j));
 
-            if (scupMap.containsKey(pattern)) {
-              reconstructISCUPList(scupMap.get(pattern));
+            if (iscupMap.containsKey(pattern)) {
+              reconstructISCUPList(iscupMap.get(pattern));
 
-              if (scupMap.get(pattern).getExpectedSupport() >= minimumSupport) {
-                pq.add(new UItemSet(pattern, scupMap.get(pattern).getExpectedSupport()));
+              if (iscupMap.get(pattern).getExpectedSupport() >= minimumSupport) {
+                pq.add(new UItemSet(pattern, iscupMap.get(pattern).getExpectedSupport()));
                 patternToTraverse.add(new SimpleImmutableEntry<>(pattern, j));
 
                 if (pq.size() >= k) {
@@ -109,7 +108,7 @@ public class ISUCK extends IUFPM {
                   constructISCUPList(idToTraverse.get(i), isup, idToTraverse.get(j), jsup);
 
               if (scup != null) {
-                scupMap.put(pattern, scup);
+                iscupMap.put(pattern, scup);
               } else {
                 continue;
               }
@@ -146,20 +145,16 @@ public class ISUCK extends IUFPM {
 
       for (int i = pattern.getValue() + 1; i < idToTraverse.size(); i++) {
         ImmutableIntSet nextPattern = pattern.getKey().newWith(idToTraverse.get(i));
-        // new ImmutableSet.Builder<Integer>()
-        //     .addAll(pattern.getKey())
-        //     .add(idToTraverse.get(i))
-        //     .build();
 
-        ISUPList sup = supMap.get(idToTraverse.get(i));
+        ISUPList sup = isupMap.get(idToTraverse.get(i));
 
-        if (scupMap.get(pattern.getKey()).getExpectedSupport() * sup.getMaxSupport()
+        if (iscupMap.get(pattern.getKey()).getExpectedSupport() * sup.getMaxSupport()
             >= minimumSupport) {
-          if (scupMap.containsKey(nextPattern)) {
-            reconstructISCUPList(scupMap.get(nextPattern));
+          if (iscupMap.containsKey(nextPattern)) {
+            reconstructISCUPList(iscupMap.get(nextPattern));
 
-            if (scupMap.get(nextPattern).getExpectedSupport() >= minimumSupport) {
-              pq.add(new UItemSet(nextPattern, scupMap.get(nextPattern).getExpectedSupport()));
+            if (iscupMap.get(nextPattern).getExpectedSupport() >= minimumSupport) {
+              pq.add(new UItemSet(nextPattern, iscupMap.get(nextPattern).getExpectedSupport()));
               nextPatternToTraverse.add(new SimpleImmutableEntry<>(nextPattern, i));
 
               if (pq.size() >= k) {
@@ -169,10 +164,10 @@ public class ISUCK extends IUFPM {
           } else {
             ISCUPList nextSCUP =
                 constructISCUPList(
-                    pattern.getKey(), scupMap.get(pattern.getKey()), idToTraverse.get(i), sup);
+                    pattern.getKey(), iscupMap.get(pattern.getKey()), idToTraverse.get(i), sup);
 
             if (nextSCUP != null) {
-              scupMap.put(nextPattern, nextSCUP);
+              iscupMap.put(nextPattern, nextSCUP);
             } else {
               continue;
             }
@@ -312,8 +307,8 @@ public class ISUCK extends IUFPM {
     int secondIndex = scup.getSecondIndex();
 
     if (scup.getFirstParent().size() == 1) {
-      ISUPList s1 = supMap.get(scup.getFirstParent().intIterator().next());
-      ISUPList s2 = supMap.get(scup.getSecondParent());
+      ISUPList s1 = isupMap.get(scup.getFirstParent().intIterator().next());
+      ISUPList s2 = isupMap.get(scup.getSecondParent());
 
       Map.Entry<Integer, int[]> s1LastSegment = s1.getLastSegment();
       Map.Entry<Integer, int[]> s2LastSegment = s2.getLastSegment();
@@ -371,10 +366,10 @@ public class ISUCK extends IUFPM {
         }
       }
     } else {
-      ISCUPList s1 = scupMap.get(scup.getFirstParent());
+      ISCUPList s1 = iscupMap.get(scup.getFirstParent());
       reconstructISCUPList(s1);
 
-      ISUPList s2 = supMap.get(scup.getSecondParent());
+      ISUPList s2 = isupMap.get(scup.getSecondParent());
 
       Map.Entry<Integer, int[]> s1LastSegment = s1.getLastSegment();
       Map.Entry<Integer, int[]> s2LastSegment = s2.getLastSegment();

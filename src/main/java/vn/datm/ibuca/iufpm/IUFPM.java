@@ -1,9 +1,9 @@
 package vn.datm.ibuca.iufpm;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.list.mutable.FastList;
@@ -73,14 +73,14 @@ public abstract class IUFPM {
   }
 
   public void addDatabase(UTDatabase db) {
-    for (ArrayList<UItem> transation : db.getTransactions()) {
+    for (ImmutableList<UItem> transation : db.getTransactions()) {
       for (UItem uItem : transation) {
-        int id = uItem.getId();
+        int id = uItem.id();
 
         if (iupMap.containsKey(id)) {
-          iupMap.get(id).addTPPair(currentTid, uItem.getProbability());
+          iupMap.get(id).addTPPair(currentTid, uItem.prob());
         } else {
-          iupMap.put(id, new UPList(id, currentTid, uItem.getProbability()));
+          iupMap.put(id, new UPList(id, currentTid, uItem.prob()));
         }
       }
 

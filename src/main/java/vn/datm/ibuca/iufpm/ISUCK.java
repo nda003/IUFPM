@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import org.eclipse.collections.api.factory.primitive.IntLists;
 import org.eclipse.collections.api.factory.primitive.IntSets;
+import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
@@ -34,18 +35,18 @@ public class ISUCK extends IUFPM {
   public void addDatabase(UTDatabase db) {
     Set<Integer> changedIds = new UnifiedSet<>();
 
-    for (ArrayList<UItem> transation : db.getTransactions()) {
+    for (ImmutableList<UItem> transation : db.getTransactions()) {
       for (UItem uItem : transation) {
-        int id = uItem.getId();
+        int id = uItem.id();
 
         if (!changedIds.contains(id)) {
           changedIds.add(id);
         }
 
         if (isupMap.containsKey(id)) {
-          isupMap.get(id).addPair(currentTid, uItem.getProbability());
+          isupMap.get(id).addPair(currentTid, uItem.prob());
         } else {
-          isupMap.put(id, new ISUPList(currentTid, uItem.getProbability()));
+          isupMap.put(id, new ISUPList(currentTid, uItem.prob()));
         }
       }
 

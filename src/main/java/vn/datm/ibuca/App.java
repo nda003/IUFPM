@@ -1,6 +1,7 @@
 package vn.datm.ibuca;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -17,6 +18,7 @@ import vn.datm.ibuca.iufpm.ISUCK;
 import vn.datm.ibuca.iufpm.ITUFP;
 import vn.datm.ibuca.iufpm.IUFPM;
 import vn.datm.ibuca.iufpm.TUFP;
+import vn.datm.ibuca.util.UItemSet;
 
 public class App {
   private enum Algorithm {
@@ -229,27 +231,27 @@ public class App {
   }
 
   public static void main(String[] args) {
-    new App().doMain(args);
+    // new App().doMain(args);
 
-    //   try (InputStream is = App.class.getResourceAsStream("/contextMushroom.txt")) {
-    //     UTDatabase db = UTDatabase.fromInputStream(is);
+    try (InputStream is = App.class.getResourceAsStream("/contextMushroom.txt")) {
+      UTDatabase db = UTDatabase.fromInputStream(is);
 
-    //     UTDatabase[] dbs = db.split(0.8f);
+      UTDatabase[] dbs = db.split(0.8f);
 
-    //     IUFPM miner = new ISUCK(100);
-    //     miner.addDatabase(dbs[0]);
-    //     miner.mine();
-    //     miner.addDatabase(dbs[1]);
-    //     List<UItemSet> topK1 = miner.mine();
+      IUFPM miner = new ISUCK(100);
+      miner.addDatabase(dbs[0]);
+      miner.mine();
+      miner.addDatabase(dbs[1]);
+      List<UItemSet> topK1 = miner.mine();
 
-    //     IUFPM miner2 = new ITUFP(100);
-    //     miner2.addDatabase(db);
-    //     List<UItemSet> topK2 = miner2.mine();
+      IUFPM miner2 = new ITUFP(100);
+      miner2.addDatabase(db);
+      List<UItemSet> topK2 = miner2.mine();
 
-    //     System.out.println(topK1);
-    //     System.out.println(topK2);
-    //   } catch (IOException e) {
-    //     e.printStackTrace();
-    //   }
+      System.out.println(topK1);
+      System.out.println(topK2);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 }

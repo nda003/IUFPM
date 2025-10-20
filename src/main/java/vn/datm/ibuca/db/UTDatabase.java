@@ -6,20 +6,23 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.impl.factory.Lists;
+import org.eclipse.collections.impl.list.mutable.FastList;
 
 public class UTDatabase {
-  private List<ArrayList<UItem>> transactions = new ArrayList<ArrayList<UItem>>();
+  private ImmutableList<ImmutableList<UItem>> transactions;
 
   private UTDatabase() {}
 
-  private UTDatabase(List<ArrayList<UItem>> transactions) {
+  private UTDatabase(ImmutableList<ImmutableList<UItem>> transactions) {
     this.transactions = transactions;
   }
 
   public static UTDatabase fromFile(Path path) throws IOException {
-    UTDatabase db = new UTDatabase();
+    MutableList<ImmutableList<UItem>> bufferedTransations = new FastList<>();
 
     try (BufferedReader br = Files.newBufferedReader(path)) {
       String row;
@@ -27,19 +30,19 @@ public class UTDatabase {
       while ((row = br.readLine()) != null) {
         if (row.isEmpty()) continue;
 
-        ArrayList<UItem> transaction = db.processTransaction(row);
+        ImmutableList<UItem> transaction = processTransaction(row);
 
         if (transaction != null) {
-          db.transactions.add(transaction);
+          bufferedTransations.add(transaction);
         }
       }
     }
 
-    return db;
+    return new UTDatabase(bufferedTransations.toImmutable());
   }
 
   public static UTDatabase fromInputStream(InputStream is) throws IOException {
-    UTDatabase db = new UTDatabase();
+    MutableList<ImmutableList<UItem>> bufferedTransations = new FastList<>();
 
     try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
       String row;
@@ -47,19 +50,18 @@ public class UTDatabase {
       while ((row = br.readLine()) != null) {
         if (row.isEmpty()) continue;
 
-        ArrayList<UItem> transaction = db.processTransaction(row);
+        ImmutableList<UItem> transaction = processTransaction(row);
 
         if (transaction != null) {
-          db.transactions.add(transaction);
+          bufferedTransations.add(transaction);
         }
       }
     }
 
-    return db;
+    return new UTDatabase(bufferedTransations.toImmutable());
   }
 
-
-  public List<ArrayList<UItem>> getTransactions() {
+  public ImmutableList<ImmutableList<UItem>> getTransactions() {
     return transactions;
   }
 
@@ -80,34 +82,31 @@ public class UTDatabase {
   public String toString() {
     StringBuilder sb = new StringBuilder();
 
-    for (List<UItem> transaction : transactions) {
-      sb.append(transaction.get(0).toString());
-
-      for (int i = 1; i < transaction.size(); i++) {
-        sb.append(" " + transaction.get(i).toString());
-      }
-
+    for (ImmutableList<UItem> transaction : transactions) {
+      sb.append(transaction.makeString(" "));
       sb.append('\n');
     }
 
     return sb.toString();
   }
 
-  private ArrayList<UItem> processTransaction(String row) {
+  private static ImmutableList<UItem> processTransaction(String row) {
     String[] splitRow = row.split(":");
     String[] ids = splitRow[0].split("\\s+");
     String[] probs = splitRow[1].split("\\s+");
 
-    ArrayList<UItem> transaction = new ArrayList<>();
+    // ImmutableList<UItem> transaction = new ArrayList<>();
 
     if (ids.length == probs.length) {
       try {
-        for (int i = 0; i < ids.length; i++) {
-          int id = Integer.parseInt(ids[i]);
-          double prob = Double.parseDouble(probs[i]);
+        ImmutableList<UItem> transactions =
+            Lists.immutable
+                .with(ids)
+                .zip(Lists.immutable.with(probs))
+                .collect(
+                    p -> new UItem(Integer.parseInt(p.getOne()), Double.parseDouble(p.getTwo())));
 
-          transaction.add(new UItem(id, prob));
-        }
+        return transactions;
       } catch (NumberFormatException e) {
         System.err.println("Unable to process row line: " + row + '.');
         return null;
@@ -116,7 +115,5 @@ public class UTDatabase {
       System.err.println("Unable to process row line: " + row + '.');
       return null;
     }
-
-    return transaction;
   }
 }

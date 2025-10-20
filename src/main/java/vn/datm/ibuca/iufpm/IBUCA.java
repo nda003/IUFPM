@@ -108,7 +108,12 @@ public class IBUCA extends IUFPM {
               }
             } else {
               SCUP scup = constructSCUP(idToTraverse.get(i), isup, idToTraverse.get(j), jsup);
-              scupMap.put(pattern, scup);
+
+              if (scup != null) {
+                scupMap.put(pattern, scup);
+              } else {
+                continue;
+              }
 
               if (scup.getExpectedSupport() >= minimumSupport) {
                 pq.add(new UItemSet(pattern, scup.getExpectedSupport()));
@@ -165,7 +170,12 @@ public class IBUCA extends IUFPM {
             SCUP nextSCUP =
                 constructSCUP(
                     pattern.getKey(), scupMap.get(pattern.getKey()), idToTraverse.get(i), sup);
-            scupMap.put(nextPattern, nextSCUP);
+
+            if (nextSCUP != null) {
+              scupMap.put(nextPattern, nextSCUP);
+            } else {
+              continue;
+            }
 
             if (nextSCUP.getExpectedSupport() >= minimumSupport) {
               pq.add(new UItemSet(nextPattern, nextSCUP.getExpectedSupport()));
@@ -238,6 +248,10 @@ public class IBUCA extends IUFPM {
       segmentSize += s1Segment[1] - s1Segment[0] + 1;
     }
 
+    if (scup.getIncrementSegments().isEmpty()) {
+      return null;
+    }
+
     pairs.addAll(bufferedPairs);
 
     return scup;
@@ -293,6 +307,10 @@ public class IBUCA extends IUFPM {
       }
 
       segmentSize += inSeg[2] - inSeg[1] + 1;
+    }
+
+    if (scup.getIncrementSegments().isEmpty()) {
+      return null;
     }
 
     pairs.addAll(bufferedPairs);

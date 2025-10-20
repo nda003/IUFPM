@@ -69,12 +69,6 @@ public class SUP {
                 "(expectedSupport=%.2f, maxSupport=%.2f, %s)",
                 expectedSupport, maxSupport, inSeg.toString()));
 
-    // for (int i = 1; i < pos.size(); i++) {
-    //   sb.append(", " + Arrays.toString(pos.get(i)));
-    // }
-
-    // sb.append("])");
-
     return sb.toString();
   }
 }

@@ -1,4 +1,4 @@
-package vn.datm.ibuca.util;
+package vn.datm.iufpm.util;
 
 import java.util.ArrayList;
 import java.util.List;

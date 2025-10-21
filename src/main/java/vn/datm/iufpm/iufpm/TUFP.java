@@ -1,4 +1,4 @@
-package vn.datm.ibuca.iufpm;
+package vn.datm.iufpm.iufpm;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
@@ -8,10 +8,10 @@ import java.util.List;
 import org.eclipse.collections.api.factory.primitive.IntLists;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 
-import vn.datm.ibuca.util.CUPList;
-import vn.datm.ibuca.util.TPPair;
-import vn.datm.ibuca.util.UItemSet;
-import vn.datm.ibuca.util.UPList;
+import vn.datm.iufpm.util.CUPList;
+import vn.datm.iufpm.util.TPPair;
+import vn.datm.iufpm.util.UItemSet;
+import vn.datm.iufpm.util.UPList;
 
 public class TUFP extends ITUFP {
   public TUFP(int k) {

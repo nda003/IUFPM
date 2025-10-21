@@ -1,4 +1,4 @@
-package vn.datm.ibuca.iufpm;
+package vn.datm.iufpm.iufpm;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
@@ -15,12 +15,12 @@ import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.impl.map.mutable.UnifiedMap;
 import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
 import org.eclipse.collections.impl.set.mutable.UnifiedSet;
-import vn.datm.ibuca.db.UItem;
-import vn.datm.ibuca.db.UTDatabase;
-import vn.datm.ibuca.util.ISCUPList;
-import vn.datm.ibuca.util.ISUPList;
-import vn.datm.ibuca.util.TPPair;
-import vn.datm.ibuca.util.UItemSet;
+import vn.datm.iufpm.db.UItem;
+import vn.datm.iufpm.db.UTDatabase;
+import vn.datm.iufpm.util.ISCUPList;
+import vn.datm.iufpm.util.ISUPList;
+import vn.datm.iufpm.util.TPPair;
+import vn.datm.iufpm.util.UItemSet;
 
 public class ISUCK extends IUFPM {
   private int currentIncrement = 0;

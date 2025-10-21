@@ -1,4 +1,4 @@
-package vn.datm.ibuca.util;
+package vn.datm.iufpm.util;
 
 import org.eclipse.collections.api.factory.primitive.IntSets;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;

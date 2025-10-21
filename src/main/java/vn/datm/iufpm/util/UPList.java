@@ -1,4 +1,4 @@
-package vn.datm.ibuca.util;
+package vn.datm.iufpm.util;
 
 import java.util.List;
 import org.eclipse.collections.impl.list.mutable.FastList;

@@ -1,4 +1,4 @@
-package vn.datm.ibuca;
+package vn.datm.iufpm;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,12 +13,12 @@ import org.eclipse.collections.impl.list.mutable.primitive.LongArrayList;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
-import vn.datm.ibuca.db.UTDatabase;
-import vn.datm.ibuca.iufpm.ISUCK;
-import vn.datm.ibuca.iufpm.ITUFP;
-import vn.datm.ibuca.iufpm.IUFPM;
-import vn.datm.ibuca.iufpm.TUFP;
-import vn.datm.ibuca.util.UItemSet;
+import vn.datm.iufpm.db.UTDatabase;
+import vn.datm.iufpm.iufpm.ISUCK;
+import vn.datm.iufpm.iufpm.ITUFP;
+import vn.datm.iufpm.iufpm.IUFPM;
+import vn.datm.iufpm.iufpm.TUFP;
+import vn.datm.iufpm.util.UItemSet;
 
 public class App {
   private enum Algorithm {
@@ -149,13 +149,13 @@ public class App {
       parser.parseArgument(args);
     } catch (CmdLineException e) {
       System.err.println(e.getMessage());
-      System.err.println("java -jar ibucaBenchmark.jar [options...] arguments...");
+      System.err.println("java -jar iufpmBenchmark.jar [options...] arguments...");
       parser.printUsage(System.err);
       return;
     }
 
     if (help) {
-      System.out.println("java -jar ibucaBenchmark.jar [options...] arguments...");
+      System.out.println("java -jar iufpmBenchmark.jar [options...] arguments...");
       parser.printUsage(System.out);
       return;
     }
@@ -231,27 +231,6 @@ public class App {
   }
 
   public static void main(String[] args) {
-    // new App().doMain(args);
-
-    try (InputStream is = App.class.getResourceAsStream("/contextMushroom.txt")) {
-      UTDatabase db = UTDatabase.fromInputStream(is);
-
-      UTDatabase[] dbs = db.split(0.8f);
-
-      IUFPM miner = new ISUCK(100);
-      miner.addDatabase(dbs[0]);
-      miner.mine();
-      miner.addDatabase(dbs[1]);
-      List<UItemSet> topK1 = miner.mine();
-
-      IUFPM miner2 = new ITUFP(100);
-      miner2.addDatabase(db);
-      List<UItemSet> topK2 = miner2.mine();
-
-      System.out.println(topK1);
-      System.out.println(topK2);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    new App().doMain(args);
   }
 }

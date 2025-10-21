@@ -1,4 +1,4 @@
-package vn.datm.ibuca.db;
+package vn.datm.iufpm.db;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.impl.factory.Lists;
@@ -94,8 +93,6 @@ public class UTDatabase {
     String[] splitRow = row.split(":");
     String[] ids = splitRow[0].split("\\s+");
     String[] probs = splitRow[1].split("\\s+");
-
-    // ImmutableList<UItem> transaction = new ArrayList<>();
 
     if (ids.length == probs.length) {
       try {

@@ -1,4 +1,4 @@
-package vn.datm.ibuca.iufpm;
+package vn.datm.iufpm.iufpm;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -8,10 +8,10 @@ import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.list.mutable.FastList;
 import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
-import vn.datm.ibuca.db.UItem;
-import vn.datm.ibuca.db.UTDatabase;
-import vn.datm.ibuca.util.UItemSet;
-import vn.datm.ibuca.util.UPList;
+import vn.datm.iufpm.db.UItem;
+import vn.datm.iufpm.db.UTDatabase;
+import vn.datm.iufpm.util.UItemSet;
+import vn.datm.iufpm.util.UPList;
 
 public abstract class IUFPM {
   protected class LimitedSortedItemSets {

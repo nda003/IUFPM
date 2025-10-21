@@ -1,4 +1,4 @@
-package vn.datm.ibuca.db;
+package vn.datm.iufpm.db;
 
 public record UItem(int id, double prob) {
   // private final int id;

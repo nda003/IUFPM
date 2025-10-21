@@ -3,19 +3,19 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>vn.datm.ibuca</groupId>
-  <artifactId>ibuca</artifactId>
+  <groupId>vn.datm.iufpm</groupId>
+  <artifactId>iufpm</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>ibuca</name>
+  <name>iufpm</name>
   <!-- FIXME change it to the project's website -->
   <url>http://www.example.com</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.release>21</maven.compiler.release>
-    <uberjar.name>ibucaBenchmarks</uberjar.name>
+    <uberjar.name>iufpmBenchmark</uberjar.name>
   </properties>
 
   <dependencyManagement>
@@ -85,7 +85,7 @@
               <transformers>
                 <transformer
                   implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-            			<mainClass>vn.datm.ibuca.App</mainClass>
+            			<mainClass>vn.datm.iufpm.App</mainClass>
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
               </transformers>
@@ -132,7 +132,7 @@
           	<archive>
           		<manifest>
           			<addClasspath>true</addClasspath>
-          			<mainClass>vn.datm.ibuca.App</mainClass>
+          			<mainClass>vn.datm.iufpm.App</mainClass>
           		</manifest>
           	</archive>
           </configuration>

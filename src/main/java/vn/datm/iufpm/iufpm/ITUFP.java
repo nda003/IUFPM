@@ -1,4 +1,4 @@
-package vn.datm.ibuca.iufpm;
+package vn.datm.iufpm.iufpm;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
@@ -10,10 +10,10 @@ import org.eclipse.collections.api.factory.primitive.IntSets;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.impl.map.mutable.UnifiedMap;
-import vn.datm.ibuca.util.ICUPList;
-import vn.datm.ibuca.util.TPPair;
-import vn.datm.ibuca.util.UItemSet;
-import vn.datm.ibuca.util.UPList;
+import vn.datm.iufpm.util.ICUPList;
+import vn.datm.iufpm.util.TPPair;
+import vn.datm.iufpm.util.UItemSet;
+import vn.datm.iufpm.util.UPList;
 
 public class ITUFP extends IUFPM {
   private Map<ImmutableIntSet, ICUPList> icupMap = new UnifiedMap<>();

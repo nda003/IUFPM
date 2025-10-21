@@ -10,7 +10,7 @@ The uncertain datasets such as `contextMushroom.txt` and `contextFoodmart.txt` i
 
 This repository requires Java 21 or higher. To run the program, execute the followings:
 
-```
-$ mvn clean package
-$ java -jar target/benchmarks.jar
+```bash
+mvn clean package
+java -jar target/benchmarks.jar
 ```

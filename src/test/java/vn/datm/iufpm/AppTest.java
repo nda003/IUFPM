@@ -7,10 +7,10 @@ import java.io.InputStream;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import vn.datm.iufpm.db.UTDatabase;
-import vn.datm.iufpm.iufpm.ISUCK;
-import vn.datm.iufpm.iufpm.ITUFP;
-import vn.datm.iufpm.iufpm.IUFPM;
-import vn.datm.iufpm.iufpm.TUFP;
+import vn.datm.iufpm.lib.ISUCK;
+import vn.datm.iufpm.lib.ITUFP;
+import vn.datm.iufpm.lib.IUFPM;
+import vn.datm.iufpm.lib.TUFP;
 import vn.datm.iufpm.util.UItemSet;
 
 public class AppTest {

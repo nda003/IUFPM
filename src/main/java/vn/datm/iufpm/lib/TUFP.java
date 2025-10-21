@@ -1,4 +1,4 @@
-package vn.datm.iufpm.iufpm;
+package vn.datm.iufpm.lib;
 
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;

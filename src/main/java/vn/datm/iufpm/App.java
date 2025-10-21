@@ -1,7 +1,6 @@
 package vn.datm.iufpm;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -14,11 +13,10 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import vn.datm.iufpm.db.UTDatabase;
-import vn.datm.iufpm.iufpm.ISUCK;
-import vn.datm.iufpm.iufpm.ITUFP;
-import vn.datm.iufpm.iufpm.IUFPM;
-import vn.datm.iufpm.iufpm.TUFP;
-import vn.datm.iufpm.util.UItemSet;
+import vn.datm.iufpm.lib.ISUCK;
+import vn.datm.iufpm.lib.ITUFP;
+import vn.datm.iufpm.lib.IUFPM;
+import vn.datm.iufpm.lib.TUFP;
 
 public class App {
   private enum Algorithm {
@@ -79,7 +77,7 @@ public class App {
   private int warmnup = 2;
 
   @Option(name = "-i", usage = "input dataset")
-  private Path path;
+  private Path dataset;
 
   @Option(name = "-a", usage = "algorithm to benchmark")
   private Algorithm algorithm = Algorithm.ISUCK;
@@ -170,6 +168,7 @@ public class App {
 
       return;
     }
+
     IUFPMFactory factory;
 
     switch (algorithm) {
@@ -184,9 +183,11 @@ public class App {
         break;
     }
 
+    System.out.println("algorithm,topK,averageTime,times");
+
     try {
-      if (Files.isRegularFile(path)) {
-        UTDatabase db = UTDatabase.fromFile(path);
+      if (Files.isRegularFile(dataset)) {
+        UTDatabase db = UTDatabase.fromFile(dataset);
 
         for (Integer k : topKs) {
           LongList times = benchmarkIUFPM(factory, k, db);
@@ -195,10 +196,10 @@ public class App {
                   "%s,%d,%.2f,%s", factory.toString(), k, times.average(), times.makeString(" "));
           System.out.println(row);
         }
-      } else if (Files.isDirectory(path)) {
+      } else if (Files.isDirectory(dataset)) {
         List<UTDatabase> dbs;
 
-        try (Stream<Path> stream = Files.list(path)) {
+        try (Stream<Path> stream = Files.list(dataset)) {
           dbs =
               stream
                   .filter((f) -> Files.isRegularFile(f))
@@ -208,7 +209,7 @@ public class App {
                           return UTDatabase.fromFile(f);
                         } catch (IOException e) {
                           e.printStackTrace();
-                          System.err.println("Unable to access " + path);
+                          System.err.println("Unable to access " + dataset);
                           return null;
                         }
                       })
@@ -226,7 +227,7 @@ public class App {
       }
     } catch (IOException e) {
       e.printStackTrace();
-      System.err.println("Unable to access " + path);
+      System.err.println("Unable to access " + dataset);
     }
   }
 

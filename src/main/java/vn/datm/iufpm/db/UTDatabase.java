@@ -12,9 +12,7 @@ import org.eclipse.collections.impl.factory.Lists;
 import org.eclipse.collections.impl.list.mutable.FastList;
 
 public class UTDatabase {
-  private ImmutableList<ImmutableList<UItem>> transactions;
-
-  private UTDatabase() {}
+  private final ImmutableList<ImmutableList<UItem>> transactions;
 
   private UTDatabase(ImmutableList<ImmutableList<UItem>> transactions) {
     this.transactions = transactions;

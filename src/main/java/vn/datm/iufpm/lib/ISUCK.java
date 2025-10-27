@@ -363,7 +363,7 @@ public class ISUCK extends IUFPM {
 
         int s2Index = secondIndex;
 
-        for (Map.Entry<Integer, int[]> entry : s1.getIncrementSegments().sequencedEntrySet()) {
+        for (Map.Entry<Integer, int[]> entry : s1.getIncrementSegments().entrySet()) {
           int inc = entry.getKey();
           int[] s1Segment = entry.getValue();
 
@@ -421,7 +421,7 @@ public class ISUCK extends IUFPM {
 
         int s2Index = secondIndex;
 
-        for (Map.Entry<Integer, int[]> entry : s1.getIncrementSegments().sequencedEntrySet()) {
+        for (Map.Entry<Integer, int[]> entry : s1.getIncrementSegments().entrySet()) {
           int inc = entry.getKey();
           int[] s1Segment = entry.getValue();
 

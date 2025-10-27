@@ -3,12 +3,15 @@ package vn.datm.iufpm;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import org.eclipse.collections.api.list.primitive.LongList;
 import org.eclipse.collections.impl.list.mutable.FastList;
 import org.eclipse.collections.impl.list.mutable.primitive.LongArrayList;
+import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
@@ -76,14 +79,23 @@ public class App {
   @Option(name = "-w", usage = "number of warmnup iterations")
   private int warmnup = 2;
 
-  @Option(name = "-i", usage = "input dataset")
-  private Path dataset;
+  // @Option(name = "-i", usage = "input dataset")
+  // private Path dataset;
 
   @Option(name = "-a", usage = "algorithm to benchmark")
   private Algorithm algorithm = Algorithm.ISUCK;
 
+  @Option(name = "-v", usage = "verbose output")
+  private boolean verbose = false;
+
+  @Option(name = "-l", usage = "benchmark incremental lazy mining")
+  private boolean lazy = false;
+
   @Option(name = "-h", hidden = true, usage = "print help")
-  private boolean help;
+  private boolean help = false;
+
+  @Argument(usage = "the path to the input uncertain dataset", metaVar = "PATH")
+  private List<String> arguements = new ArrayList<>();
 
   public long timeIUFPM(IUFPM miner) {
     long start = System.nanoTime();
@@ -94,15 +106,33 @@ public class App {
   public LongList benchmarkIUFPM(IUFPMFactory factory, int k, UTDatabase db) {
     LongArrayList time = new LongArrayList(measurement);
 
+    if (verbose) {
+      System.out.println(
+          String.format(
+              "Benchmarking %s at k=%d against a database of size %d for %d warmup and %d"
+                  + " measurement iterations:",
+              factory.toString(), k, db.size(), warmnup, measurement));
+    }
+
     for (int i = 0; i < measurement + warmnup; i++) {
       if (i < warmnup) {
         IUFPM miner = factory.create(k);
         miner.addDatabase(db);
-        miner.mine();
+
+        long t = timeIUFPM(miner);
+
+        if (verbose) {
+          System.out.println(String.format("Warmup iteration %d took: %d", i + 1, t));
+        }
       } else {
         IUFPM miner = factory.create(k);
         miner.addDatabase(db);
         time.add(timeIUFPM(miner));
+
+        if (verbose) {
+          System.out.println(
+              String.format("Measurement iteration %d took: %d", i - warmnup + 1, time.getLast()));
+        }
       }
     }
 
@@ -112,24 +142,70 @@ public class App {
   public LongList benchmarkIUFPM(IUFPMFactory factory, int k, List<UTDatabase> dbs) {
     LongArrayList time = new LongArrayList(measurement);
 
+    if (verbose) {
+      System.out.println(
+          String.format(
+              "Benchmarking %s at k=%d against %d databases for %d warmup and %d measurement"
+                  + " iterations:",
+              factory.toString(), k, dbs.size(), warmnup, measurement));
+    }
+
     for (int i = 0; i < measurement + warmnup; i++) {
       if (i < warmnup) {
         IUFPM miner = factory.create(k);
+
         for (UTDatabase db : dbs) {
           miner.addDatabase(db);
-          timeIUFPM(miner);
+
+          if (!lazy) {
+            long t = timeIUFPM(miner);
+
+            if (verbose) {
+              System.out.println(
+                  String.format(
+                      "Warmup iteration %d against a database of size %d took: %d",
+                      i + 1, db.size(), t));
+            }
+          }
+        }
+
+        if (lazy) {
+          long t = timeIUFPM(miner);
+
+          if (verbose) {
+            System.out.println(
+                String.format(
+                    "Warmup iteration %d against %d databases took: %d", i + 1, dbs.size(), t));
+          }
         }
       } else {
         IUFPM miner = factory.create(k);
 
-        long totalRuntime = 0;
-
         for (UTDatabase db : dbs) {
           miner.addDatabase(db);
-          totalRuntime += timeIUFPM(miner);
+
+          if (!lazy) {
+            time.add(timeIUFPM(miner));
+
+            if (verbose) {
+              System.out.println(
+                  String.format(
+                      "Measurement iteration %d against a database of size %d took: %d",
+                      i - warmnup + 1, db.size(), time.getLast()));
+            }
+          }
         }
 
-        time.add(totalRuntime);
+        if (lazy) {
+          time.add(timeIUFPM(miner));
+
+          if (verbose) {
+            System.out.println(
+                String.format(
+                    "Measurement iteration %d against %d databases took: %d",
+                    i - warmnup + 1, dbs.size(), time.getLast()));
+          }
+        }
       }
     }
 
@@ -183,7 +259,7 @@ public class App {
         break;
     }
 
-    System.out.println("algorithm,topK,averageTime,times");
+    Path dataset = Paths.get(arguements.getFirst());
 
     try {
       if (Files.isRegularFile(dataset)) {

@@ -11,13 +11,29 @@ import org.eclipse.collections.api.list.MutableList;
 import org.eclipse.collections.impl.factory.Lists;
 import org.eclipse.collections.impl.list.mutable.FastList;
 
+/** UTDatabase */
 public class UTDatabase {
+  /** The transactions recorded a list of lists of UItems */
   private final ImmutableList<ImmutableList<UItem>> transactions;
 
   private UTDatabase(ImmutableList<ImmutableList<UItem>> transactions) {
     this.transactions = transactions;
   }
 
+  /**
+   * Creates a UTDatabase from a file. The dataset format follows {@code itemId
+   * itemId:itemProbability itemProbability}. For example:
+   *
+   * <pre>{@code
+   * 10307 10311 12487:0.6609434160 0.3920031788 0.750090239
+   * 12559:0.788112943
+   * 12695 12703 18715:0.2097929623 0.3395640986 0.625568080
+   * }</pre>
+   *
+   * @param path The path of the file to be parsed.
+   * @return The UTDatabase created from the parsed file.
+   * @throws IOException There was problem accessing the file.
+   */
   public static UTDatabase fromFile(Path path) throws IOException {
     MutableList<ImmutableList<UItem>> bufferedTransations = new FastList<>();
 
@@ -38,6 +54,20 @@ public class UTDatabase {
     return new UTDatabase(bufferedTransations.toImmutable());
   }
 
+  /**
+   * Creates a UTDatabase from an input stream. The dataset format follows {@code itemId
+   * itemId:itemProbability itemProbability}. For example:
+   *
+   * <pre>{@code
+   * 10307 10311 12487:0.6609434160 0.3920031788 0.750090239
+   * 12559:0.788112943
+   * 12695 12703 18715:0.2097929623 0.3395640986 0.625568080
+   * }</pre>
+   *
+   * @param is The input stream to be parsed.
+   * @return The UTDatabase created from the parsed input stream.
+   * @throws IOException There was a problem when accessing the input stream.
+   */
   public static UTDatabase fromInputStream(InputStream is) throws IOException {
     MutableList<ImmutableList<UItem>> bufferedTransations = new FastList<>();
 
@@ -58,10 +88,22 @@ public class UTDatabase {
     return new UTDatabase(bufferedTransations.toImmutable());
   }
 
+  /**
+   * Returns an immutable list of lists of transations from this database.
+   *
+   * @return An immutable list of lists of transations from this database.
+   */
   public ImmutableList<ImmutableList<UItem>> getTransactions() {
     return transactions;
   }
 
+  /**
+   * Splits this database into 2 according the split factor.
+   *
+   * @param splitFactor The factor to split this database.
+   * @return Two databases with the first being this database splited at the split factor and the
+   *     second being the rest of the database.
+   */
   public UTDatabase[] split(float splitFactor) {
     int splitAt = (int) (size() * splitFactor);
 
@@ -71,6 +113,11 @@ public class UTDatabase {
     };
   }
 
+  /**
+   * Returns the number of lists of transactions in this database.
+   *
+   * @return The number of lists of transactions in this database.
+   */
   public int size() {
     return transactions.size();
   }
@@ -87,6 +134,12 @@ public class UTDatabase {
     return sb.toString();
   }
 
+  /**
+   * Converts a specified line of the input file or stream into a lists of transactions.
+   *
+   * @param row A line of the input file or stream
+   * @return An immutable list of UItem to append to the database
+   */
   private static ImmutableList<UItem> processTransaction(String row) {
     String[] splitRow = row.split(":");
     String[] ids = splitRow[0].split("\\s+");

@@ -15,13 +15,30 @@ import vn.datm.iufpm.util.TPPair;
 import vn.datm.iufpm.util.UItemSet;
 import vn.datm.iufpm.util.UPList;
 
-public class ITUFP extends IUFPM {
+/**
+ * An interactive top-K uncertain frequent pattern mining model modified for the incremental mining.
+ * This model reconstruct already mined {@link ICUPList} by only joining its parents from the last
+ * indexes that were mined in the previous {@link #mine()} call.
+ *
+ * @see Razieh Davashi, ITUFP: A fast method for interactive mining of Top-K frequent patterns from
+ *     uncertain data. Expert Systems with Applications, Volume 214, 2023, 119156, ISSN 0957-4174.
+ *     https://doi.org/10.1016/j.eswa.2022.119156.
+ */
+public class ITUFP extends TUFP {
+
+  /** Maps an itemset to its associated {@link ICUPList}. */
   private Map<ImmutableIntSet, ICUPList> icupMap = new UnifiedMap<>();
 
+  /**
+   * Initialize this model with a top-K value.
+   *
+   * @param k The top-K value.
+   */
   public ITUFP(int k) {
     super(k);
   }
 
+  @Override
   public List<UItemSet> mine() {
     LimitedSortedItemSets pq =
         new LimitedSortedItemSets(
@@ -142,7 +159,16 @@ public class ITUFP extends IUFPM {
     }
   }
 
-  protected ICUPList constructICUPList(int id1, UPList l1, int id2, UPList l2) {
+  /**
+   * Constructs a new {@link ICUPList}.
+   *
+   * @param id1 The transaction id of the first parent.
+   * @param l1 The first parent.
+   * @param id2 The transaction id of the second parent.
+   * @param l2 The second parent.
+   * @return The newly constructed {@link ICUPList}.
+   */
+  private ICUPList constructICUPList(int id1, UPList l1, int id2, UPList l2) {
     ICUPList cList = new ICUPList(id1, id2);
     int l2Index = 0;
 
@@ -159,7 +185,8 @@ public class ITUFP extends IUFPM {
 
       cList.setFirstIndex(i + 1);
 
-      if (minimumSupport - cList.getExpectedSupport() > (l1.size() - i) * l2.getMaxSupport()) {
+      if (minimumSupport > cList.getExpectedSupport()
+          && minimumSupport - cList.getExpectedSupport() > (l1.size() - i) * l2.getMaxSupport()) {
         break;
       }
     }
@@ -169,7 +196,16 @@ public class ITUFP extends IUFPM {
     return cList;
   }
 
-  protected ICUPList constructICUPList(ImmutableIntSet p, ICUPList l1, int id, UPList l2) {
+  /**
+   * Constructs a new {@link ICUPList}.
+   *
+   * @param p The pattern of the first parent.
+   * @param l1 The first parent.
+   * @param id The transaction id of the second parent.
+   * @param l2 The second parent.
+   * @return The newly constructed {@link ICUPList}.
+   */
+  private ICUPList constructICUPList(ImmutableIntSet p, ICUPList l1, int id, UPList l2) {
     ICUPList cList = new ICUPList(p, id);
 
     int l2Index = 0;
@@ -187,7 +223,8 @@ public class ITUFP extends IUFPM {
 
       cList.setFirstIndex(i + 1);
 
-      if (minimumSupport - cList.getExpectedSupport() > (l1.size() - i) * l2.getMaxSupport()) {
+      if (minimumSupport > cList.getExpectedSupport()
+          && minimumSupport - cList.getExpectedSupport() > (l1.size() - i) * l2.getMaxSupport()) {
         break;
       }
     }
@@ -197,7 +234,12 @@ public class ITUFP extends IUFPM {
     return cList;
   }
 
-  protected void reconstructICUPList(ICUPList cList) {
+  /**
+   * Reconstruct the specified {@link ICUPList}.
+   *
+   * @param cList The {@link ICUPList} to be reconstructed.
+   */
+  private void reconstructICUPList(ICUPList cList) {
     if (cList.getFirstParent().size() == 1) {
       UPList l1 = iupMap.get(cList.getFirstParent().intIterator().next());
       UPList l2 = iupMap.get(cList.getSecondParent());
@@ -218,7 +260,9 @@ public class ITUFP extends IUFPM {
 
           cList.setFirstIndex(i + 1);
 
-          if (minimumSupport - cList.getExpectedSupport() > (l1.size() - i) * l2.getMaxSupport()) {
+          if (minimumSupport > cList.getExpectedSupport()
+              && minimumSupport - cList.getExpectedSupport()
+                  > (l1.size() - i) * l2.getMaxSupport()) {
             break;
           }
         }
@@ -247,7 +291,9 @@ public class ITUFP extends IUFPM {
 
           cList.setFirstIndex(i + 1);
 
-          if (minimumSupport - cList.getExpectedSupport() > (l1.size() - i) * l2.getMaxSupport()) {
+          if (minimumSupport > cList.getExpectedSupport()
+              && minimumSupport - cList.getExpectedSupport()
+                  > (l1.size() - i) * l2.getMaxSupport()) {
             break;
           }
         }

@@ -22,15 +22,42 @@ import vn.datm.iufpm.util.ISUPList;
 import vn.datm.iufpm.util.TPPair;
 import vn.datm.iufpm.util.UItemSet;
 
+/**
+ * An incrementally segmented uncertain top-K frequent pattern mining model. This model differs from
+ * {@link ITUFP} by recording at which increment were the transaction added to the model, thus
+ * creating an initial lower bound and an upper bound from which to join and construct {@link
+ * ISUPList} while remembering from which index were the {@link ISCUPList} were last mined for
+ * reconstruction.
+ */
 public class ISUCK extends IUFPM {
+  /**
+   * The current increment to record the increment in which the transactions were added in.
+   *
+   * @see {@link #addDatabase(UTDatabase)}
+   */
   private int currentIncrement = 0;
+
+  /** Maps the transaction's id to its associated {@link ISUPList}. */
   private MutableIntObjectMap<ISUPList> isupMap = new IntObjectHashMap<>();
+
+  /** Maps a itemset to its associated {@link ISCUPList}. */
   private Map<ImmutableIntSet, ISCUPList> iscupMap = new UnifiedMap<>();
 
+  /**
+   * Initialize this model with a top-K value.
+   *
+   * @param k The top-K value.
+   */
   public ISUCK(int k) {
     super(k);
   }
 
+  /**
+   * Increment this model using the specified {@link UTDatabase}, uses {@link #currentTid} to record
+   * transactions and {@link #currentIncrement} to record its associated increment.
+   *
+   * @param db The database to add to the model.
+   */
   @Override
   public void addDatabase(UTDatabase db) {
     Set<Integer> changedIds = new UnifiedSet<>();
@@ -191,16 +218,23 @@ public class ISUCK extends IUFPM {
     }
   }
 
+  /**
+   * Constructs a new {@link ISCUPList}.
+   *
+   * @param id1 The transaction id of the first parent.
+   * @param s1 The first parent.
+   * @param id2 The transaction id of the second parent.
+   * @param s2 The second parent.
+   * @return The newly constructed {@link ISCUPList}.
+   */
   private ISCUPList constructISCUPList(int id1, ISUPList s1, int id2, ISUPList s2) {
     ISCUPList scup = new ISCUPList(id1, id2);
-    int segmentSize = 0;
 
     for (Map.Entry<Integer, int[]> entry : s1.getIncrementSegments().entrySet()) {
       int inc = entry.getKey();
       int[] s1Segment = entry.getValue();
 
       if (!s2.containIncrement(inc)) {
-        segmentSize += s1Segment[1] - s1Segment[0] + 1;
         continue;
       }
 
@@ -221,8 +255,8 @@ public class ISUCK extends IUFPM {
 
         scup.setFirstIndex(j + 1);
 
-        if (minimumSupport - scup.getExpectedSupport()
-            > (s1.size() - (j - s1Segment[0] + segmentSize)) * s2.getMaxSupport()) {
+        if (minimumSupport > scup.getExpectedSupport()
+            && minimumSupport - scup.getExpectedSupport() > (s1.size() - j) * s2.getMaxSupport()) {
           ppf = true;
           break;
         }
@@ -235,8 +269,6 @@ public class ISUCK extends IUFPM {
       if (ppf) {
         break;
       }
-
-      segmentSize += s1Segment[1] - s1Segment[0] + 1;
     }
 
     if (scup.getIncrementSegments().isEmpty()) {
@@ -246,16 +278,23 @@ public class ISUCK extends IUFPM {
     return scup;
   }
 
+  /**
+   * Constructs a new {@link ISCUPList}.
+   *
+   * @param p The pattern of the first parent.
+   * @param s1 The first parent.
+   * @param id The transaction id of the second parent.
+   * @param s2 The second parent.
+   * @return The newly constructed {@link ISCUPList}.
+   */
   private ISCUPList constructISCUPList(ImmutableIntSet p, ISCUPList s1, int id, ISUPList s2) {
     ISCUPList scup = new ISCUPList(p, id);
-    int segmentSize = 0;
 
     for (Map.Entry<Integer, int[]> entry : s1.getIncrementSegments().entrySet()) {
       int inc = entry.getKey();
       int[] s1Segment = entry.getValue();
 
       if (!s2.containIncrement(inc)) {
-        segmentSize += s1Segment[1] - s1Segment[0] + 1;
         continue;
       }
 
@@ -276,8 +315,8 @@ public class ISUCK extends IUFPM {
 
         scup.setFirstIndex(j + 1);
 
-        if (minimumSupport - scup.getExpectedSupport()
-            > (s1.size() - (j - s1Segment[0] + segmentSize)) * s2.getMaxSupport()) {
+        if (minimumSupport > scup.getExpectedSupport()
+            && minimumSupport - scup.getExpectedSupport() > (s1.size() - j) * s2.getMaxSupport()) {
           ppf = true;
           break;
         }
@@ -290,8 +329,6 @@ public class ISUCK extends IUFPM {
       if (ppf) {
         break;
       }
-
-      segmentSize += s1Segment[1] - s1Segment[0] + 1;
     }
 
     if (scup.getIncrementSegments().isEmpty()) {
@@ -301,6 +338,11 @@ public class ISUCK extends IUFPM {
     return scup;
   }
 
+  /**
+   * Reconstruct the specified {@link ISCUPList}.
+   *
+   * @param scup The {@link ISCUPList} to be reconstructed.
+   */
   private void reconstructISCUPList(ISCUPList scup) {
     int lastInc = scup.getLastSegment().getKey();
 
@@ -319,7 +361,6 @@ public class ISUCK extends IUFPM {
           && lastInc < s2LastSegment.getKey()
           && secondIndex < s2LastSegment.getValue()[1]) {
 
-        int segmentSize = 0;
         int s2Index = secondIndex;
 
         for (Map.Entry<Integer, int[]> entry : s1.getIncrementSegments().sequencedEntrySet()) {
@@ -327,7 +368,6 @@ public class ISUCK extends IUFPM {
           int[] s1Segment = entry.getValue();
 
           if (inc < lastInc || !s2.containIncrement(inc)) {
-            segmentSize += s1Segment[1] - s1Segment[0] + 1;
             continue;
           }
 
@@ -348,8 +388,9 @@ public class ISUCK extends IUFPM {
 
             scup.setFirstIndex(j + 1);
 
-            if (minimumSupport - scup.getExpectedSupport()
-                > (s1.size() - (j - s1Segment[0] + segmentSize)) * s2.getMaxSupport()) {
+            if (minimumSupport > scup.getExpectedSupport()
+                && minimumSupport - scup.getExpectedSupport()
+                    > (s1.size() - j) * s2.getMaxSupport()) {
               ppf = true;
               break;
             }
@@ -362,8 +403,6 @@ public class ISUCK extends IUFPM {
           if (ppf) {
             break;
           }
-
-          segmentSize += s1Segment[1] - s1Segment[0] + 1;
         }
       }
     } else {
@@ -380,7 +419,6 @@ public class ISUCK extends IUFPM {
           && lastInc < s2LastSegment.getKey()
           && secondIndex < s2LastSegment.getValue()[1]) {
 
-        int segmentSize = 0;
         int s2Index = secondIndex;
 
         for (Map.Entry<Integer, int[]> entry : s1.getIncrementSegments().sequencedEntrySet()) {
@@ -388,7 +426,6 @@ public class ISUCK extends IUFPM {
           int[] s1Segment = entry.getValue();
 
           if (inc < lastInc || !s2.containIncrement(inc)) {
-            segmentSize += s1Segment[1] - s1Segment[0] + 1;
             continue;
           }
 
@@ -409,8 +446,9 @@ public class ISUCK extends IUFPM {
 
             scup.setFirstIndex(j + 1);
 
-            if (minimumSupport - scup.getExpectedSupport()
-                > (s1.size() - (j - s1Segment[0] + segmentSize)) * s2.getMaxSupport()) {
+            if (minimumSupport > scup.getExpectedSupport()
+                && minimumSupport - scup.getExpectedSupport()
+                    > (s1.size() - j) * s2.getMaxSupport()) {
               ppf = true;
               break;
             }
@@ -423,8 +461,6 @@ public class ISUCK extends IUFPM {
           if (ppf) {
             break;
           }
-
-          segmentSize += s1Segment[1] - s1Segment[0] + 1;
         }
       }
     }

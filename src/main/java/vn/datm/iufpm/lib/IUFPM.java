@@ -1,56 +1,82 @@
 package vn.datm.iufpm.lib;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.MutableList;
-import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
-import org.eclipse.collections.impl.list.mutable.FastList;
-import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
-import vn.datm.iufpm.db.UItem;
+import org.eclipse.collections.api.set.sorted.MutableSortedSet;
+import org.eclipse.collections.impl.set.sorted.mutable.TreeSortedSet;
 import vn.datm.iufpm.db.UTDatabase;
 import vn.datm.iufpm.util.UItemSet;
-import vn.datm.iufpm.util.UPList;
 
+/** An abstract class for incremental top-K uncertain frequent pattern mining models. */
 public abstract class IUFPM {
+  /** LimitedSortedItemSets */
   protected class LimitedSortedItemSets {
-    private MutableList<UItemSet> sets;
+    private MutableSortedSet<UItemSet> sets;
     private final int maximumSize;
-    private Comparator<UItemSet> comparator;
 
+    /**
+     * Constructs a new, empty set sorted according to the specified comparator.
+     *
+     * @param maximumSize The maximum size for the itemsets
+     * @param comparator The comparator to sort the itemsets
+     */
     public LimitedSortedItemSets(int maximumSize, Comparator<UItemSet> comparator) {
-      this.sets = new FastList<>(maximumSize + 1);
-      this.comparator = comparator;
+      this.sets = new TreeSortedSet<>(comparator);
       this.maximumSize = maximumSize;
     }
 
+    /**
+     * Appends all of the elements in the specified iterable to the sets then reduce the sets to the
+     * {@link #maximumSize}.
+     *
+     * @param c
+     */
     public void addAll(Iterable<UItemSet> c) {
       sets.addAllIterable(c);
-      sets.sortThis(comparator);
 
       if (sets.size() > maximumSize) {
-        sets.subList(maximumSize, sets.size()).clear();
+        sets = sets.take(maximumSize);
       }
     }
 
+    /**
+     * Returns the last (highest) element currently in the sets.
+     *
+     * @return The last (highest) element currently in the sets.
+     */
     public UItemSet getLast() {
       return sets.getLast();
     }
 
+    /**
+     * Adds the specified itemset and polls last (highest) element if already at {@link
+     * #maximumSize}
+     *
+     * @param set The set to be added.
+     */
     public void add(UItemSet set) {
       sets.add(set);
-      Collections.sort(sets, comparator);
 
       if (sets.size() > maximumSize) {
-        sets.remove(sets.size() - 1);
+        sets.remove(sets.last());
       }
     }
 
+    /**
+     * Returns the sets as a {@link MutableList}.
+     *
+     * @return The sets as a {@link MutableList}.
+     */
     public MutableList<UItemSet> toList() {
-      return sets;
+      return sets.toList();
     }
 
+    /**
+     * Returns the number of itemset the sets.
+     *
+     * @return The number of itemset the sets.
+     */
     public int size() {
       return sets.size();
     }
@@ -61,32 +87,41 @@ public abstract class IUFPM {
     }
   }
 
+  /** The value of top-K. */
   protected final int k;
 
+  /**
+   * The current transation being procesed.
+   *
+   * @see {@link #addDatabase(UTDatabase)}
+   */
   protected int currentTid = 0;
+
+  /** The minimum support, recorded for pruning. */
   protected double minimumSupport = 0;
 
-  protected MutableIntObjectMap<UPList> iupMap = new IntObjectHashMap<>();
-
+  /**
+   * Initialize this model with a top-K value
+   *
+   * @param k The top-K value.
+   */
   protected IUFPM(int k) {
     this.k = k;
   }
 
-  public void addDatabase(UTDatabase db) {
-    for (ImmutableList<UItem> transation : db.getTransactions()) {
-      for (UItem uItem : transation) {
-        int id = uItem.id();
+  /**
+   * Increment this model using the specified {@link UTDatabase}, uses {@link #currentTid} to record
+   * transactions.
+   *
+   * @param db The database to add to the model.
+   */
+  public abstract void addDatabase(UTDatabase db);
 
-        if (iupMap.containsKey(id)) {
-          iupMap.get(id).addTPPair(currentTid, uItem.prob());
-        } else {
-          iupMap.put(id, new UPList(id, currentTid, uItem.prob()));
-        }
-      }
-
-      currentTid++;
-    }
-  }
-
+  /**
+   * Mine the transactions recorded in this model.
+   *
+   * @return A list of {@link #k}-length {@link UItemSet} sorted in descending order according to their
+   *     expected support.
+   */
   public abstract List<UItemSet> mine();
 }

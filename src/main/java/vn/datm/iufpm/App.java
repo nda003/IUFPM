@@ -21,6 +21,7 @@ import vn.datm.iufpm.lib.ITUFP;
 import vn.datm.iufpm.lib.IUFPM;
 import vn.datm.iufpm.lib.TUFP;
 
+/** App */
 public class App {
   private enum Algorithm {
     ISUCK,
@@ -97,12 +98,22 @@ public class App {
   @Argument(usage = "the path to the input uncertain dataset", metaVar = "PATH")
   private List<String> arguements = new ArrayList<>();
 
+  /**
+   * @param miner The IUFPM algorithm to time
+   * @return The time it took to run {@code miner.mine()} in milliseconds
+   */
   public long timeIUFPM(IUFPM miner) {
     long start = System.nanoTime();
     miner.mine();
     return TimeUnit.MILLISECONDS.convert(System.nanoTime() - start, TimeUnit.NANOSECONDS);
   }
 
+  /**
+   * @param factory The IUFPMFactory to create a IUFPM algorithm from.
+   * @param k The top-K value to use for measurements
+   * @param db The database to measure against
+   * @return A list of times in milliseconds from each measurement
+   */
   public LongList benchmarkIUFPM(IUFPMFactory factory, int k, UTDatabase db) {
     LongArrayList time = new LongArrayList(measurement);
 
@@ -139,6 +150,13 @@ public class App {
     return time;
   }
 
+  /**
+   * @param factory The IUFPMFactory to create a IUFPM algorithm from.
+   * @param k The top-K value to use for measurements
+   * @param dbs Each increment of a database to measure against
+   * @return A list of times of length {@code measurement * dbs.size()} in milliseconds from each
+   *     increment within a measurement
+   */
   public LongList benchmarkIUFPM(IUFPMFactory factory, int k, List<UTDatabase> dbs) {
     LongArrayList time = new LongArrayList(measurement);
 
@@ -212,10 +230,19 @@ public class App {
     return time;
   }
 
+  /**
+   * @return An array of integers parsed from {@code -k}
+   * @throws NumberFormatException {@code -k} was passed an illegal arguement
+   */
   public int[] parseTopK() throws NumberFormatException {
     return FastList.newListWith(k.split(",")).collectInt(x -> Integer.parseInt(x)).toArray();
   }
 
+  /**
+   * Handles CLI parsing and logics
+   *
+   * @param Arguements passed from {@link #main(String[])}
+   */
   public void doMain(String[] args) {
     CmdLineParser parser = new CmdLineParser(this);
 

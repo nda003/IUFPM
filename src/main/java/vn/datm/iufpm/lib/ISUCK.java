@@ -1,25 +1,26 @@
 package vn.datm.iufpm.lib;
 
-import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.eclipse.collections.api.factory.primitive.IntLists;
 import org.eclipse.collections.api.factory.primitive.IntSets;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
-import org.eclipse.collections.impl.map.mutable.UnifiedMap;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.api.tuple.Pair;
+import org.eclipse.collections.api.tuple.Triple;
+import org.eclipse.collections.impl.list.mutable.FastList;
 import org.eclipse.collections.impl.map.mutable.primitive.IntObjectHashMap;
-import org.eclipse.collections.impl.set.mutable.UnifiedSet;
+import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
+import org.eclipse.collections.impl.tuple.Tuples;
 import vn.datm.iufpm.db.UItem;
 import vn.datm.iufpm.db.UTDatabase;
 import vn.datm.iufpm.util.ISCUPList;
 import vn.datm.iufpm.util.ISUPList;
-import vn.datm.iufpm.util.TPPair;
 import vn.datm.iufpm.util.UItemSet;
 
 /**
@@ -60,7 +61,7 @@ public class ISUCK extends IUFPM {
    */
   @Override
   public void addDatabase(UTDatabase db) {
-    Set<Integer> changedIds = new UnifiedSet<>();
+    MutableIntSet changedIds = new IntHashSet();
 
     for (ImmutableList<UItem> transation : db.getTransactions()) {
       for (UItem uItem : transation) {
@@ -71,7 +72,7 @@ public class ISUCK extends IUFPM {
         }
 
         if (isupMap.containsKey(id)) {
-          isupMap.get(id).addPair(currentTid, uItem.prob());
+          isupMap.get(id).addTransaction(currentTid, uItem.prob());
         } else {
           isupMap.put(id, new ISUPList(currentTid, uItem.prob()));
         }
@@ -80,10 +81,7 @@ public class ISUCK extends IUFPM {
       currentTid++;
     }
 
-    for (int id : changedIds) {
-      isupMap.get(id).putIncrement(currentIncrement);
-    }
-
+    changedIds.each((id) -> isupMap.get(id).putIncrement(currentIncrement));
     currentIncrement++;
   }
 
@@ -111,7 +109,7 @@ public class ISUCK extends IUFPM {
       ISUPList isup = isupMap.get(idToTraverse.get(i));
 
       if (isup.getExpectedSupport() >= minimumSupport) {
-        List<SimpleImmutableEntry<ImmutableIntSet, Integer>> patternToTraverse = new ArrayList<>();
+        List<Pair<ImmutableIntSet, Integer>> patternToTraverse = new FastList<>();
 
         for (int j = i + 1; j < idToTraverse.size(); j++) {
           ISUPList jsup = isupMap.get(idToTraverse.get(j));
@@ -125,7 +123,7 @@ public class ISUCK extends IUFPM {
 
               if (iscupMap.get(pattern).getExpectedSupport() >= minimumSupport) {
                 pq.add(new UItemSet(pattern, iscupMap.get(pattern).getExpectedSupport()));
-                patternToTraverse.add(new SimpleImmutableEntry<>(pattern, j));
+                patternToTraverse.add(Tuples.pair(pattern, j));
 
                 if (pq.size() >= k) {
                   minimumSupport = pq.getLast().getExpectedSupport();
@@ -143,7 +141,7 @@ public class ISUCK extends IUFPM {
 
               if (scup.getExpectedSupport() >= minimumSupport) {
                 pq.add(new UItemSet(pattern, scup.getExpectedSupport()));
-                patternToTraverse.add(new SimpleImmutableEntry<>(pattern, j));
+                patternToTraverse.add(Tuples.pair(pattern, j));
 
                 if (pq.size() >= k) {
                   minimumSupport = pq.getLast().getExpectedSupport();
@@ -165,25 +163,24 @@ public class ISUCK extends IUFPM {
   private void mine(
       LimitedSortedItemSets pq,
       ImmutableIntList idToTraverse,
-      List<SimpleImmutableEntry<ImmutableIntSet, Integer>> patternToTraverse,
+      List<Pair<ImmutableIntSet, Integer>> patternToTraverse,
       int fromIndex) {
-    for (SimpleImmutableEntry<ImmutableIntSet, Integer> pattern : patternToTraverse) {
-      List<SimpleImmutableEntry<ImmutableIntSet, Integer>> nextPatternToTraverse =
-          new ArrayList<>();
+    for (Pair<ImmutableIntSet, Integer> pattern : patternToTraverse) {
+      List<Pair<ImmutableIntSet, Integer>> nextPatternToTraverse = new FastList<>();
 
-      for (int i = pattern.getValue() + 1; i < idToTraverse.size(); i++) {
-        ImmutableIntSet nextPattern = pattern.getKey().newWith(idToTraverse.get(i));
+      for (int i = pattern.getTwo() + 1; i < idToTraverse.size(); i++) {
+        ImmutableIntSet nextPattern = pattern.getOne().newWith(idToTraverse.get(i));
 
         ISUPList sup = isupMap.get(idToTraverse.get(i));
 
-        if (iscupMap.get(pattern.getKey()).getExpectedSupport() * sup.getMaxSupport()
+        if (iscupMap.get(pattern.getOne()).getExpectedSupport() * sup.getMaxSupport()
             >= minimumSupport) {
           if (iscupMap.containsKey(nextPattern)) {
             reconstructISCUPList(iscupMap.get(nextPattern));
 
             if (iscupMap.get(nextPattern).getExpectedSupport() >= minimumSupport) {
               pq.add(new UItemSet(nextPattern, iscupMap.get(nextPattern).getExpectedSupport()));
-              nextPatternToTraverse.add(new SimpleImmutableEntry<>(nextPattern, i));
+              nextPatternToTraverse.add(Tuples.pair(nextPattern, i));
 
               if (pq.size() >= k) {
                 minimumSupport = pq.getLast().getExpectedSupport();
@@ -192,7 +189,7 @@ public class ISUCK extends IUFPM {
           } else {
             ISCUPList nextSCUP =
                 constructISCUPList(
-                    pattern.getKey(), iscupMap.get(pattern.getKey()), idToTraverse.get(i), sup);
+                    pattern.getOne(), iscupMap.get(pattern.getOne()), idToTraverse.get(i), sup);
 
             if (nextSCUP != null) {
               iscupMap.put(nextPattern, nextSCUP);
@@ -202,7 +199,7 @@ public class ISUCK extends IUFPM {
 
             if (nextSCUP.getExpectedSupport() >= minimumSupport) {
               pq.add(new UItemSet(nextPattern, nextSCUP.getExpectedSupport()));
-              nextPatternToTraverse.add(new SimpleImmutableEntry<>(nextPattern, i));
+              nextPatternToTraverse.add(Tuples.pair(nextPattern, i));
 
               if (pq.size() >= k) {
                 minimumSupport = pq.getLast().getExpectedSupport();
@@ -230,50 +227,74 @@ public class ISUCK extends IUFPM {
   private ISCUPList constructISCUPList(int id1, ISUPList s1, int id2, ISUPList s2) {
     ISCUPList scup = new ISCUPList(id1, id2);
 
+    List<Triple<Integer, int[], int[]>> sharedIncrementSegments = new FastList<>();
+    int potentialSize = 0;
+
     for (Map.Entry<Integer, int[]> entry : s1.getIncrementSegments().entrySet()) {
       int inc = entry.getKey();
-      int[] s1Segment = entry.getValue();
 
-      if (!s2.containIncrement(inc)) {
+      int[] s2Segment = s2.getSegmentAt(inc);
+
+      if (s2Segment == null) {
         continue;
       }
 
-      int[] s2Segment = s2.getSegmentAt(inc);
+      int[] s1Segment = entry.getValue();
+
+      sharedIncrementSegments.add(Tuples.triple(inc, s1Segment, s2Segment));
+      potentialSize += s1Segment[1] - s1Segment[0] + 1;
+    }
+
+    if (sharedIncrementSegments.isEmpty()) {
+      return null;
+    }
+
+    int processedSegmentSize = 0;
+
+    for (Triple<Integer, int[], int[]> triple : sharedIncrementSegments) {
+      int increment = triple.getOne();
+
+      int[] s1Segment = triple.getTwo();
+      int[] s2Segment = triple.getThree();
 
       int s2Index = s2Segment[0];
 
       boolean ppf = false;
 
-      for (int j = s1Segment[0]; j <= s1Segment[1]; j++) {
-        TPPair pair = s1.getPairAt(j);
-        int oIndex = s2.search(pair.tid(), s2Index, s2Segment[1]);
+      for (int i = s1Segment[0]; i <= s1Segment[1]; i++) {
+        int tid = s1.getTidAt(i);
+        int oIndex = s2.search(tid, s2Index, s2Segment[1]);
 
         if (oIndex > -1) {
           s2Index = oIndex + 1;
-          scup.addPair(pair.tid(), pair.prob() * s2.getPairAt(oIndex).prob());
+          scup.addTransaction(tid, s1.getProbAt(i) * s2.getProbAt(oIndex));
         }
 
-        scup.setFirstIndex(j + 1);
+        scup.setFirstIndex(i + 1);
 
         if (minimumSupport > scup.getExpectedSupport()
-            && minimumSupport - scup.getExpectedSupport() > (s1.size() - j) * s2.getMaxSupport()) {
+            && minimumSupport - scup.getExpectedSupport()
+                > (potentialSize - (i - s1Segment[0] + processedSegmentSize))
+                    * s2.getMaxSupport()) {
           ppf = true;
           break;
         }
       }
 
-      scup.putIncrement(inc);
+      scup.putIncrement(increment);
 
       scup.setSecondIndex(s2Index);
 
       if (ppf) {
         break;
       }
+
+      processedSegmentSize += s1Segment[1] - s1Segment[0] + 1;
     }
 
-    if (scup.getIncrementSegments().isEmpty()) {
-      return null;
-    }
+    // if (scup.getIncrementSegments().isEmpty()) {
+    //   return null;
+    // }
 
     return scup;
   }
@@ -290,33 +311,55 @@ public class ISUCK extends IUFPM {
   private ISCUPList constructISCUPList(ImmutableIntSet p, ISCUPList s1, int id, ISUPList s2) {
     ISCUPList scup = new ISCUPList(p, id);
 
+    List<Triple<Integer, int[], int[]>> sharedIncrementSegments = new FastList<>();
+    int potentialSize = 0;
+
     for (Map.Entry<Integer, int[]> entry : s1.getIncrementSegments().entrySet()) {
       int inc = entry.getKey();
-      int[] s1Segment = entry.getValue();
 
-      if (!s2.containIncrement(inc)) {
+      int[] s2Segment = s2.getSegmentAt(inc);
+
+      if (s2Segment == null) {
         continue;
       }
 
-      int[] s2Segment = s2.getSegmentAt(inc);
+      int[] s1Segment = entry.getValue();
+
+      sharedIncrementSegments.add(Tuples.triple(inc, s1Segment, s2Segment));
+      potentialSize += s1Segment[1] - s1Segment[0] + 1;
+    }
+
+    if (sharedIncrementSegments.isEmpty()) {
+      return null;
+    }
+
+    int processedSegmentSize = 0;
+
+    for (Triple<Integer, int[], int[]> triple : sharedIncrementSegments) {
+      int inc = triple.getOne();
+
+      int[] s1Segment = triple.getTwo();
+      int[] s2Segment = triple.getThree();
 
       int s2Index = s2Segment[0];
 
       boolean ppf = false;
 
-      for (int j = s1Segment[0]; j <= s1Segment[1]; j++) {
-        TPPair pair = s1.getPairAt(j);
-        int oIndex = s2.search(pair.tid(), s2Index, s2Segment[1]);
+      for (int i = s1Segment[0]; i <= s1Segment[1]; i++) {
+        int tid = s1.getTidAt(i);
+        int oIndex = s2.search(tid, s2Index, s2Segment[1]);
 
         if (oIndex > -1) {
           s2Index = oIndex + 1;
-          scup.addPair(pair.tid(), pair.prob() * s2.getPairAt(oIndex).prob());
+          scup.addTransaction(tid, s1.getProbAt(i) * s2.getProbAt(oIndex));
         }
 
-        scup.setFirstIndex(j + 1);
+        scup.setFirstIndex(i + 1);
 
         if (minimumSupport > scup.getExpectedSupport()
-            && minimumSupport - scup.getExpectedSupport() > (s1.size() - j) * s2.getMaxSupport()) {
+            && minimumSupport - scup.getExpectedSupport()
+                > (potentialSize - (i - s1Segment[0] + processedSegmentSize))
+                    * s2.getMaxSupport()) {
           ppf = true;
           break;
         }
@@ -329,10 +372,8 @@ public class ISUCK extends IUFPM {
       if (ppf) {
         break;
       }
-    }
 
-    if (scup.getIncrementSegments().isEmpty()) {
-      return null;
+      processedSegmentSize += s1Segment[1] - s1Segment[0] + 1;
     }
 
     return scup;
@@ -361,36 +402,63 @@ public class ISUCK extends IUFPM {
           && lastInc < s2LastSegment.getKey()
           && secondIndex < s2LastSegment.getValue()[1]) {
 
-        int s2Index = secondIndex;
+        List<Triple<Integer, int[], int[]>> sharedIncrementSegments = new FastList<>();
+        int potentialSize = 0;
 
         for (Map.Entry<Integer, int[]> entry : s1.getIncrementSegments().entrySet()) {
           int inc = entry.getKey();
-          int[] s1Segment = entry.getValue();
 
-          if (inc < lastInc || !s2.containIncrement(inc)) {
+          if (inc < lastInc) {
             continue;
           }
 
-          int[] s2Segment = s2.getSegmentAt(entry.getKey());
-          s2Index = Math.max(s2Segment[0], s2Index);
-          int s2End = s2Segment[1];
+          int[] s2Segment = s2.getSegmentAt(inc);
+
+          if (s2Segment == null) {
+            continue;
+          }
+
+          int[] s1Segment = entry.getValue();
+
+          if (inc == lastInc) {
+            sharedIncrementSegments.add(
+                Tuples.triple(
+                    inc,
+                    new int[] {firstIndex, s1Segment[1]},
+                    new int[] {secondIndex, s2Segment[1]}));
+            potentialSize += s1Segment[1] - firstIndex + 1;
+          } else {
+            sharedIncrementSegments.add(Tuples.triple(inc, s1Segment, s2Segment));
+            potentialSize += s1Segment[1] - s1Segment[0] + 1;
+          }
+        }
+
+        int processedSegmentSize = 0;
+
+        for (Triple<Integer, int[], int[]> triple : sharedIncrementSegments) {
+          int inc = triple.getOne();
+          int[] s1Segment = triple.getTwo();
+          int[] s2Segment = triple.getThree();
 
           boolean ppf = false;
 
-          for (int j = Math.max(s1Segment[0], firstIndex); j <= s1Segment[1]; j++) {
-            TPPair pair = s1.getPairAt(j);
-            int oIndex = s2.search(pair.tid(), s2Index, s2End);
+          int s2Index = s2Segment[0];
+
+          for (int i = s1Segment[0]; i <= s1Segment[1]; i++) {
+            int tid = s1.getTidAt(i);
+            int oIndex = s2.search(tid, s2Index, s2Segment[1]);
 
             if (oIndex > -1) {
               s2Index = oIndex + 1;
-              scup.addPair(pair.tid(), pair.prob() * s2.getPairAt(oIndex).prob());
+              scup.addTransaction(tid, s1.getProbAt(i) * s2.getProbAt(oIndex));
             }
 
-            scup.setFirstIndex(j + 1);
+            scup.setFirstIndex(i + 1);
 
             if (minimumSupport > scup.getExpectedSupport()
                 && minimumSupport - scup.getExpectedSupport()
-                    > (s1.size() - j) * s2.getMaxSupport()) {
+                    > (potentialSize - (i - s1Segment[0] + processedSegmentSize))
+                        * s2.getMaxSupport()) {
               ppf = true;
               break;
             }
@@ -403,6 +471,8 @@ public class ISUCK extends IUFPM {
           if (ppf) {
             break;
           }
+
+          processedSegmentSize += s1Segment[1] - s1Segment[0] + 1;
         }
       }
     } else {
@@ -419,36 +489,65 @@ public class ISUCK extends IUFPM {
           && lastInc < s2LastSegment.getKey()
           && secondIndex < s2LastSegment.getValue()[1]) {
 
-        int s2Index = secondIndex;
+        List<Triple<Integer, int[], int[]>> sharedIncrementSegments = new FastList<>();
+        int potentialSize = 0;
 
         for (Map.Entry<Integer, int[]> entry : s1.getIncrementSegments().entrySet()) {
           int inc = entry.getKey();
-          int[] s1Segment = entry.getValue();
 
-          if (inc < lastInc || !s2.containIncrement(inc)) {
+          if (inc < lastInc) {
             continue;
           }
 
-          int[] s2Segment = s2.getSegmentAt(entry.getKey());
-          s2Index = Math.max(s2Segment[0], s2Index);
-          int s2End = s2Segment[1];
+          int[] s2Segment = s2.getSegmentAt(inc);
+
+          if (s2Segment == null) {
+            continue;
+          }
+
+          int[] s1Segment = entry.getValue();
+
+          if (inc == lastInc) {
+            if (firstIndex < s1Segment[1] && secondIndex < s2Segment[1]) {
+              sharedIncrementSegments.add(
+                  Tuples.triple(
+                      inc,
+                      new int[] {firstIndex, s1Segment[1]},
+                      new int[] {secondIndex, s2Segment[1]}));
+              potentialSize += s1Segment[1] - firstIndex + 1;
+            }
+          } else {
+            sharedIncrementSegments.add(Tuples.triple(inc, s1Segment, s2Segment));
+            potentialSize += s1Segment[1] - s1Segment[0] + 1;
+          }
+        }
+
+        int processedSegmentSize = 0;
+
+        for (Triple<Integer, int[], int[]> triple : sharedIncrementSegments) {
+          int inc = triple.getOne();
+          int[] s1Segment = triple.getTwo();
+          int[] s2Segment = triple.getThree();
 
           boolean ppf = false;
 
-          for (int j = Math.max(s1Segment[0], firstIndex); j <= s1Segment[1]; j++) {
-            TPPair pair = s1.getPairAt(j);
-            int oIndex = s2.search(pair.tid(), s2Index, s2End);
+          int s2Index = s2Segment[0];
+
+          for (int i = s1Segment[0]; i <= s1Segment[1]; i++) {
+            int tid = s1.getTidAt(i);
+            int oIndex = s2.search(tid, s2Index, s2Segment[1]);
 
             if (oIndex > -1) {
               s2Index = oIndex + 1;
-              scup.addPair(pair.tid(), pair.prob() * s2.getPairAt(oIndex).prob());
+              scup.addTransaction(tid, s1.getProbAt(i) * s2.getProbAt(oIndex));
             }
 
-            scup.setFirstIndex(j + 1);
+            scup.setFirstIndex(i + 1);
 
             if (minimumSupport > scup.getExpectedSupport()
                 && minimumSupport - scup.getExpectedSupport()
-                    > (s1.size() - j) * s2.getMaxSupport()) {
+                    > (potentialSize - (i - s1Segment[0] + processedSegmentSize))
+                        * s2.getMaxSupport()) {
               ppf = true;
               break;
             }
@@ -461,6 +560,8 @@ public class ISUCK extends IUFPM {
           if (ppf) {
             break;
           }
+
+          processedSegmentSize += s1Segment[1] - s1Segment[0] + 1;
         }
       }
     }

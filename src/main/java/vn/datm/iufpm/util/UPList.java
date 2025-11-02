@@ -1,49 +1,53 @@
 package vn.datm.iufpm.util;
 
-import java.util.List;
-import org.eclipse.collections.impl.list.mutable.FastList;
+import org.eclipse.collections.impl.list.mutable.primitive.DoubleArrayList;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 public class UPList {
   private static final int LINEAR_SEARCH_THRESHOLD = 32;
 
-  // private int itemId;
   private double expectedSupport;
   private double maxSupport;
-  private List<TPPair> pairs = new FastList<>();
+  protected IntArrayList tidList;
+  protected DoubleArrayList probList;
 
   protected UPList() {
     expectedSupport = 0;
     maxSupport = 0;
+    tidList = new IntArrayList();
+    probList = new DoubleArrayList();
   }
 
-  public UPList(int itemId, int tid, double prob) {
-    // this.itemId = itemId;
+  public UPList(int tid, double prob) {
     expectedSupport = prob;
     maxSupport = prob;
-    pairs.add(new TPPair(tid, prob));
+    tidList = IntArrayList.newListWith(tid);
+    probList = DoubleArrayList.newListWith(prob);
   }
 
-  public boolean addTPPair(int tid, double prob) {
+  public void addTransaction(int tid, double prob) {
     expectedSupport += prob;
 
     if (prob > maxSupport) {
       maxSupport = prob;
     }
 
-    return pairs.add(new TPPair(tid, prob));
+    tidList.add(tid);
+    probList.add(prob);
   }
 
-  public TPPair getTransationAt(int index) {
-    return pairs.get(index);
+  public void ensureCapacity(int minCapacity) {
+    tidList.ensureCapacity(minCapacity);
+    probList.ensureCapacity(minCapacity);
   }
 
-  // public UItemSet getItemSet() {
-  //   return new UItemSet(itemId, expectedSupport);
-  // }
+  public int getTidAt(int index) {
+    return tidList.get(index);
+  }
 
-  // public int getId() {
-  //   return itemId;
-  // }
+  public double getProbAt(int index) {
+    return probList.get(index);
+  }
 
   public double getExpectedSupport() {
     return expectedSupport;
@@ -54,71 +58,33 @@ public class UPList {
   }
 
   public boolean isEmpty() {
-    return pairs.size() == 0;
+    return tidList.isEmpty();
   }
 
   public int size() {
-    return pairs.size();
+    return tidList.size();
   }
 
-  public int getTransationIndex(int tid) {
-    if (pairs.size() <= LINEAR_SEARCH_THRESHOLD) {
-      return linearSearchTransationIndex(tid);
-    } else {
-      return binarySearchSearchTransationIndex(tid);
-    }
-  }
-
-  public int getTransationIndex(int tid, int from) {
-    if (from >= size()) {
+  public int search(int tid, int from) {
+    if (from >= tidList.size()) {
       return -1;
     }
 
-    if (pairs.get(from).tid() == tid) {
+    if (tidList.get(from) == tid) {
       return from;
     }
 
-    if (pairs.size() - from <= LINEAR_SEARCH_THRESHOLD) {
+    if (tidList.size() - from <= LINEAR_SEARCH_THRESHOLD) {
       return linearSearchTransationIndex(tid, from);
     } else {
       return binarySearchSearchTransationIndex(tid, from);
     }
   }
 
-  private int linearSearchTransationIndex(int tid) {
-    for (int i = 0; i < pairs.size(); i++) {
-      if (pairs.get(i).tid() == tid) {
-        return i;
-      }
-    }
-
-    return -1;
-  }
-
   private int linearSearchTransationIndex(int tid, int from) {
-    for (int i = from; i < pairs.size(); i++) {
-      if (pairs.get(i).tid() == tid) {
+    for (int i = from; i < tidList.size(); i++) {
+      if (tidList.get(i) == tid) {
         return i;
-      }
-    }
-
-    return -1;
-  }
-
-  private int binarySearchSearchTransationIndex(int tid) {
-    int left = 0;
-    int right = pairs.size() - 1;
-
-    while (left <= right) {
-      int mid = left + (right - left) / 2;
-      int midPairTID = pairs.get(mid).tid();
-
-      if (midPairTID > tid) {
-        right = mid - 1;
-      } else if (midPairTID < tid) {
-        left = mid + 1;
-      } else {
-        return mid;
       }
     }
 
@@ -127,15 +93,15 @@ public class UPList {
 
   private int binarySearchSearchTransationIndex(int tid, int from) {
     int left = from;
-    int right = pairs.size() - 1;
+    int right = tidList.size() - 1;
 
     while (left <= right) {
       int mid = left + (right - left) / 2;
-      int midPairTID = pairs.get(mid).tid();
+      int midTid = tidList.get(mid);
 
-      if (midPairTID > tid) {
+      if (midTid > tid) {
         right = mid - 1;
-      } else if (midPairTID < tid) {
+      } else if (midTid < tid) {
         left = mid + 1;
       } else {
         return mid;

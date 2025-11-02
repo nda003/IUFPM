@@ -1,87 +1,141 @@
 package vn.datm.iufpm.util;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.eclipse.collections.api.list.primitive.MutableDoubleList;
+import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
+import org.eclipse.collections.impl.list.mutable.primitive.DoubleArrayList;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
+/** Conditional uncertain pattern list. This data structure has no incremental capability. */
 public class CUPList {
-  protected UItemSet itemSet;
-  protected double maxSupport;
-  protected List<TPPair> pairs = new ArrayList<>();
+  /** The itemset associated with this class. */
+  private UItemSet itemSet;
 
-  protected CUPList() {}
+  /** The maximum support for the itemset of this class. */
+  private double maxSupport;
 
+  /** The list of the transactions belonging to the itemset of this class. */
+  private MutableIntList tidList = new IntArrayList();
+
+  private MutableDoubleList probList = new DoubleArrayList();
+
+  /**
+   * Constructs a list with the specified ids.
+   *
+   * @param id1 The id of the first parent.
+   * @param id2 The id of the second parent.
+   */
   public CUPList(int id1, int id2) {
     itemSet = new UItemSet(id1, id2);
   }
 
+  /**
+   * Constructs a list with the specified pattern and id.
+   *
+   * @param p The pattern of the first parent.
+   * @param id The id of the second parent.
+   */
   public CUPList(ImmutableIntSet p, int id) {
     itemSet = new UItemSet(p, id);
   }
 
-  public boolean addTPPair(int tid, double prob) {
+  /**
+   * Add a transaction with a specified tid and support. Augement maximum support and expected
+   * support.
+   *
+   * @param tid The transaction's id.
+   * @param prob The support of the transaction.
+   * @return {@code true}
+   */
+  public void addTransaction(int tid, double prob) {
     itemSet.addToExpectedSupport(prob);
 
     if (prob > maxSupport) {
       maxSupport = prob;
     }
 
-    return pairs.add(new TPPair(tid, prob));
+    tidList.add(tid);
+    probList.add(prob);
   }
 
+  /**
+   * Returns the itemset associated with this class.
+   *
+   * @return The itemset associated with this class.
+   */
   public UItemSet getItemSet() {
     return itemSet;
   }
 
+  /**
+   * Returns the ids within the itemset associated with this class.
+   *
+   * @return The ids within the itemset associated with this class.
+   */
   public ImmutableIntSet getIds() {
     return itemSet.getIds();
   }
 
+  /**
+   * Returns the expected support of the itemset associated with this class.
+   *
+   * @return The expected support of the itemset associated with this class.
+   */
   public double getExpectedSupport() {
     return itemSet.getExpectedSupport();
   }
 
+  /**
+   * Returns the maximum support of the itemset associated with this class.
+   *
+   * @return The maximum support of the itemset associated with this class.
+   */
   public double getMaxSupport() {
     return maxSupport;
   }
 
-  public List<TPPair> getTransactions() {
-    return pairs;
-  }
-
-  public TPPair getTransationAt(int index) {
-    return pairs.get(index);
-  }
-
   public boolean isEmpty() {
-    return pairs.size() == 0;
+    return tidList.isEmpty();
   }
 
+  public int getTidAt(int index) {
+    return tidList.get(index);
+  }
+
+  public double getProbAt(int index) {
+    return probList.get(index);
+  }
+
+  /**
+   * Returns the number of transactions in this class.
+   *
+   * @return The number of transactions in this class.
+   */
   public int size() {
-    return pairs.size();
+    return tidList.size();
   }
 
-  @Override
-  public String toString() {
-    if (isEmpty()) {
-      return String.format(
-          "(%s, expSup=%.2f, maxSup=%.2f, [])",
-          itemSet.getIds().toString(), itemSet.getExpectedSupport(), maxSupport);
-    }
+  // @Override
+  // public String toString() {
+  //   if (isEmpty()) {
+  //     return String.format(
+  //         "(%s, expSup=%.2f, maxSup=%.2f, [])",
+  //         itemSet.getIds().toString(), itemSet.getExpectedSupport(), maxSupport);
+  //   }
 
-    StringBuilder sb =
-        new StringBuilder(
-            String.format(
-                    "(%s, expSup=%.2f, maxSup=%.2f, [",
-                    itemSet.getIds().toString(), itemSet.getExpectedSupport(), maxSupport)
-                + pairs.get(0).toString());
+  //   StringBuilder sb =
+  //       new StringBuilder(
+  //           String.format(
+  //                   "(%s, expSup=%.2f, maxSup=%.2f, [",
+  //                   itemSet.getIds().toString(), itemSet.getExpectedSupport(), maxSupport)
+  //               + pairs.get(0).toString());
 
-    for (int i = 1; i < pairs.size(); i++) {
-      sb.append(", " + pairs.get(i).toString());
-    }
+  //   for (int i = 1; i < pairs.size(); i++) {
+  //     sb.append(", " + pairs.get(i).toString());
+  //   }
 
-    sb.append("])");
+  //   sb.append("])");
 
-    return sb.toString();
-  }
+  //   return sb.toString();
+  // }
 }

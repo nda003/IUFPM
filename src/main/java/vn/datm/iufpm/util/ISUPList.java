@@ -1,15 +1,16 @@
 package vn.datm.iufpm.util;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import org.eclipse.collections.impl.list.mutable.FastList;
+import org.eclipse.collections.impl.list.mutable.primitive.DoubleArrayList;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 public class ISUPList {
   private static final int LINEAR_SEARCH_THRESHOLD = 32;
 
   protected LinkedHashMap<Integer, int[]> incSeg = new LinkedHashMap<>();
-  protected List<TPPair> pairs = new FastList<>();
+  protected IntArrayList tidList;
+  protected DoubleArrayList probList;
   protected int pairsPreviousSize = 0;
 
   private double maxSupport;
@@ -18,27 +19,39 @@ public class ISUPList {
   protected ISUPList() {
     maxSupport = 0;
     expectedSupport = 0;
-  }
-
-  public ISUPList(double support) {
-    maxSupport = support;
-    expectedSupport = support;
+    tidList = new IntArrayList();
+    probList = new DoubleArrayList();
   }
 
   public ISUPList(int tid, double prob) {
     maxSupport = prob;
     expectedSupport = prob;
-    pairs.add(new TPPair(tid, prob));
+    tidList = IntArrayList.newListWith(tid);
+    probList = DoubleArrayList.newListWith(prob);
   }
 
-  public boolean addPair(int tid, double prob) {
-    maxSupport = Math.max(maxSupport, prob);
+  public void addTransaction(int tid, double prob) {
     expectedSupport += prob;
-    return pairs.add(new TPPair(tid, prob));
+
+    if (prob > maxSupport) {
+      maxSupport = prob;
+    }
+
+    tidList.add(tid);
+    probList.add(prob);
   }
 
-  public TPPair getPairAt(int index) {
-    return pairs.get(index);
+  public void ensureCapacity(int minCapacity) {
+    tidList.ensureCapacity(minCapacity);
+    probList.ensureCapacity(minCapacity);
+  }
+
+  public int getTidAt(int index) {
+    return tidList.get(index);
+  }
+
+  public double getProbAt(int index) {
+    return probList.get(index);
   }
 
   public LinkedHashMap<Integer, int[]> getIncrementSegments() {
@@ -62,14 +75,9 @@ public class ISUPList {
   }
 
   public void putIncrement(int increment) {
-    incSeg.put(increment, new int[] {pairsPreviousSize, pairs.size() - 1});
-    pairsPreviousSize = pairs.size();
+    incSeg.put(increment, new int[] {pairsPreviousSize, tidList.size() - 1});
+    pairsPreviousSize = tidList.size();
   }
-
-  // public void accept(double support) {
-  //   maxSupport = Math.max(support, maxSupport);
-  //   expectedSupport += support;
-  // }
 
   public double getMaxSupport() {
     return maxSupport;
@@ -80,7 +88,7 @@ public class ISUPList {
   }
 
   public int size() {
-    return pairs.size();
+    return tidList.size();
   }
 
   public int search(int tid, int start, int end) {
@@ -88,12 +96,12 @@ public class ISUPList {
       return -1;
     }
 
-    if (pairs.get(start).tid() <= tid && tid <= pairs.get(end).tid()) {
-      if (pairs.get(start).tid() == tid) {
+    if (tidList.get(start) <= tid && tid <= tidList.get(end)) {
+      if (tidList.get(start) == tid) {
         return start;
       }
 
-      if (pairs.get(end).tid() == tid) {
+      if (tidList.get(end) == tid) {
         return end;
       }
 
@@ -109,7 +117,7 @@ public class ISUPList {
 
   private int linearSearch(int tid, int start, int end) {
     for (int i = start; i <= end; i++) {
-      if (pairs.get(i).tid() == tid) {
+      if (tidList.get(i) == tid) {
         return i;
       }
     }
@@ -124,7 +132,7 @@ public class ISUPList {
     while (left <= right) {
       int mid = left + (right - left) / 2;
 
-      int midPairTID = pairs.get(mid).tid();
+      int midPairTID = tidList.get(mid);
 
       if (midPairTID > tid) {
         right = mid - 1;

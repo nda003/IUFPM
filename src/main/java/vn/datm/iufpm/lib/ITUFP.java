@@ -1,17 +1,18 @@
 package vn.datm.iufpm.lib;
 
-import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.eclipse.collections.api.factory.primitive.IntLists;
 import org.eclipse.collections.api.factory.primitive.IntSets;
 import org.eclipse.collections.api.list.primitive.ImmutableIntList;
 import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
-import org.eclipse.collections.impl.map.mutable.UnifiedMap;
+import org.eclipse.collections.api.tuple.Pair;
+import org.eclipse.collections.impl.list.mutable.FastList;
+import org.eclipse.collections.impl.tuple.Tuples;
 import vn.datm.iufpm.util.ICUPList;
-import vn.datm.iufpm.util.TPPair;
 import vn.datm.iufpm.util.UItemSet;
 import vn.datm.iufpm.util.UPList;
 
@@ -63,7 +64,7 @@ public class ITUFP extends TUFP {
       UPList iUPList = iupMap.get(id);
 
       if (iUPList.getExpectedSupport() >= minimumSupport) {
-        List<SimpleImmutableEntry<ImmutableIntSet, Integer>> patternToTraverse = new ArrayList<>();
+        List<Pair<ImmutableIntSet, Integer>> patternToTraverse = new ArrayList<>();
 
         for (int j = i + 1; j < idToTraverse.size(); j++) {
           int jd = idToTraverse.get(j);
@@ -77,7 +78,7 @@ public class ITUFP extends TUFP {
 
               if (icupMap.get(pattern).getExpectedSupport() >= minimumSupport) {
                 pq.add(new UItemSet(pattern, icupMap.get(pattern).getExpectedSupport()));
-                patternToTraverse.add(new SimpleImmutableEntry<>(pattern, j));
+                patternToTraverse.add(Tuples.pair(pattern, j));
 
                 if (pq.size() >= k) {
                   minimumSupport = pq.getLast().getExpectedSupport();
@@ -89,7 +90,7 @@ public class ITUFP extends TUFP {
 
               if (icupList.getExpectedSupport() >= minimumSupport) {
                 pq.add(new UItemSet(pattern, icupList.getExpectedSupport()));
-                patternToTraverse.add(new SimpleImmutableEntry<>(pattern, j));
+                patternToTraverse.add(Tuples.pair(pattern, j));
 
                 if (pq.size() >= k) {
                   minimumSupport = pq.getLast().getExpectedSupport();
@@ -111,39 +112,38 @@ public class ITUFP extends TUFP {
   private void mine(
       LimitedSortedItemSets pq,
       ImmutableIntList idToTraverse,
-      List<SimpleImmutableEntry<ImmutableIntSet, Integer>> patternToTraverse,
+      List<Pair<ImmutableIntSet, Integer>> patternToTraverse,
       int fromIndex) {
-    for (SimpleImmutableEntry<ImmutableIntSet, Integer> pattern : patternToTraverse) {
-      List<SimpleImmutableEntry<ImmutableIntSet, Integer>> nextPatternToTraverse =
-          new ArrayList<>();
+    for (Pair<ImmutableIntSet, Integer> pattern : patternToTraverse) {
+      List<Pair<ImmutableIntSet, Integer>> nextPatternToTraverse = new FastList<>();
 
-      ICUPList iCUPList = icupMap.get(pattern.getKey());
+      ICUPList iCUPList = icupMap.get(pattern.getOne());
 
-      for (int i = pattern.getValue() + 1; i < idToTraverse.size(); i++) {
+      for (int i = pattern.getTwo() + 1; i < idToTraverse.size(); i++) {
         int id = idToTraverse.get(i);
         UPList iUPList = iupMap.get(id);
 
         if (iCUPList.getExpectedSupport() * iUPList.getMaxSupport() >= minimumSupport) {
-          ImmutableIntSet nextPattern = pattern.getKey().newWith(idToTraverse.get(i));
+          ImmutableIntSet nextPattern = pattern.getOne().newWith(idToTraverse.get(i));
 
           if (icupMap.containsKey(nextPattern)) {
             reconstructICUPList(icupMap.get(nextPattern));
 
             if (icupMap.get(nextPattern).getExpectedSupport() >= minimumSupport) {
               pq.add(new UItemSet(nextPattern, icupMap.get(nextPattern).getExpectedSupport()));
-              nextPatternToTraverse.add(new SimpleImmutableEntry<>(nextPattern, i));
+              nextPatternToTraverse.add(Tuples.pair(nextPattern, i));
 
               if (pq.size() >= k) {
                 minimumSupport = pq.getLast().getExpectedSupport();
               }
             }
           } else {
-            ICUPList nextICUPList = constructICUPList(pattern.getKey(), iCUPList, id, iUPList);
+            ICUPList nextICUPList = constructICUPList(pattern.getOne(), iCUPList, id, iUPList);
             icupMap.put(nextPattern, nextICUPList);
 
             if (nextICUPList.getExpectedSupport() >= minimumSupport) {
               pq.add(new UItemSet(nextPattern, nextICUPList.getExpectedSupport()));
-              nextPatternToTraverse.add(new SimpleImmutableEntry<>(nextPattern, i));
+              nextPatternToTraverse.add(Tuples.pair(nextPattern, i));
 
               if (pq.size() >= k) {
                 minimumSupport = pq.getLast().getExpectedSupport();
@@ -173,14 +173,12 @@ public class ITUFP extends TUFP {
     int l2Index = 0;
 
     for (int i = 0; i < l1.size(); i++) {
-      TPPair pair = l1.getTransationAt(i);
-      int oIndex;
-
-      oIndex = l2.getTransationIndex(pair.tid(), l2Index);
+      int tid = l1.getTidAt(i);
+      int oIndex = l2.search(tid, l2Index);
 
       if (oIndex > -1) {
         l2Index = oIndex + 1;
-        cList.addTPPair(pair.tid(), pair.prob() * l2.getTransationAt(oIndex).prob());
+        cList.addTransaction(tid, l1.getProbAt(i) * l2.getProbAt(oIndex));
       }
 
       cList.setFirstIndex(i + 1);
@@ -211,14 +209,12 @@ public class ITUFP extends TUFP {
     int l2Index = 0;
 
     for (int i = 0; i < l1.size(); i++) {
-      TPPair pair = l1.getTransationAt(i);
-      int oIndex;
-
-      oIndex = l2.getTransationIndex(pair.tid(), l2Index);
+      int tid = l1.getTidAt(i);
+      int oIndex = l2.search(tid, l2Index);
 
       if (oIndex > -1) {
         l2Index = oIndex + 1;
-        cList.addTPPair(pair.tid(), pair.prob() * l2.getTransationAt(oIndex).prob());
+        cList.addTransaction(tid, l1.getProbAt(i) * l2.getProbAt(oIndex));
       }
 
       cList.setFirstIndex(i + 1);
@@ -248,14 +244,12 @@ public class ITUFP extends TUFP {
         int l2Index = cList.getSecondIndex();
 
         for (int i = cList.getFirstIndex(); i < l1.size(); i++) {
-          TPPair pair = l1.getTransationAt(i);
-          int oIndex;
-
-          oIndex = l2.getTransationIndex(pair.tid(), l2Index);
+          int tid = l1.getTidAt(i);
+          int oIndex = l2.search(tid, l2Index);
 
           if (oIndex > -1) {
             l2Index = oIndex + 1;
-            cList.addTPPair(pair.tid(), pair.prob() * l2.getTransationAt(oIndex).prob());
+            cList.addTransaction(tid, l1.getProbAt(i) * l2.getProbAt(oIndex));
           }
 
           cList.setFirstIndex(i + 1);
@@ -279,14 +273,12 @@ public class ITUFP extends TUFP {
         int l2Index = cList.getSecondIndex();
 
         for (int i = cList.getFirstIndex(); i < l1.size(); i++) {
-          TPPair pair = l1.getTransationAt(i);
-          int oIndex;
-
-          oIndex = l2.getTransationIndex(pair.tid(), l2Index);
+          int tid = l1.getTidAt(i);
+          int oIndex = l2.search(tid, l2Index);
 
           if (oIndex > -1) {
             l2Index = oIndex + 1;
-            cList.addTPPair(pair.tid(), pair.prob() * l2.getTransationAt(oIndex).prob());
+            cList.addTransaction(tid, l1.getProbAt(i) * l2.getProbAt(oIndex));
           }
 
           cList.setFirstIndex(i + 1);

@@ -27,7 +27,7 @@ import vn.datm.iufpm.util.UPList;
 public class ITUFP extends TUFP {
 
   /** Maps an itemset to its associated {@link ICUPList}. */
-  private Map<ImmutableIntSet, ICUPList> icupMap = new UnifiedMap<>();
+  private Map<ImmutableIntSet, ICUPList> icupMap = new HashMap<>();
 
   /**
    * Initialize this model with a top-K value.

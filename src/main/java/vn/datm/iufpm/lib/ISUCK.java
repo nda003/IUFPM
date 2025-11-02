@@ -41,7 +41,7 @@ public class ISUCK extends IUFPM {
   private MutableIntObjectMap<ISUPList> isupMap = new IntObjectHashMap<>();
 
   /** Maps a itemset to its associated {@link ISCUPList}. */
-  private Map<ImmutableIntSet, ISCUPList> iscupMap = new UnifiedMap<>();
+  private Map<ImmutableIntSet, ISCUPList> iscupMap = new HashMap<>();
 
   /**
    * Initialize this model with a top-K value.

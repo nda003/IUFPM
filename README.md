@@ -31,7 +31,6 @@ java -jar iufpmBenchmark.jar [options...] arguments...
  -a [ISUCK | ITUFP | TUFP] : algorithm to benchmark (default: ISUCK)
  -k N,N,...                : top-Ks used for benchmarking seperated by comma
                              (default: 100,200,300,400,500)
- -l                        : benchmark incremental lazy mining (default: false)
  -m N                      : number of measurement iterations (default: 10)
  -v                        : verbose output (default: false)
  -w N                      : number of warmnup iterations (default: 2)

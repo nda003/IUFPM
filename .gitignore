@@ -3,6 +3,8 @@
 
 ### Datasets ###
 uncertainDatasets
+benchmarks
+batch_benchmarks.bash
 
 ### STS ###
 .apt_generated

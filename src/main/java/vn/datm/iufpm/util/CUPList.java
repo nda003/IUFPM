@@ -94,14 +94,31 @@ public class CUPList {
     return maxSupport;
   }
 
+  /**
+   * Returns {@code true} if this list contains no transactions.
+   *
+   * @return {@code true} if this list contains no transactions.
+   */
   public boolean isEmpty() {
     return tidList.isEmpty();
   }
 
+  /**
+   * Returns the transaction's id at the specified position in this list.
+   *
+   * @param index The index of the transaction's id to return.
+   * @return The transaction's id at the specified position in this list.
+   */
   public int getTidAt(int index) {
     return tidList.get(index);
   }
 
+  /**
+   * Returns the probability at the specified position in this list.
+   *
+   * @param index The index of the probability to return.
+   * @return The probability at the specified position in this list.
+   */
   public double getProbAt(int index) {
     return probList.get(index);
   }

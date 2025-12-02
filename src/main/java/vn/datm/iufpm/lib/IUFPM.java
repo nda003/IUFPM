@@ -30,7 +30,7 @@ public abstract class IUFPM {
      * Appends all of the elements in the specified iterable to the sets then reduce the sets to the
      * {@link #maximumSize}.
      *
-     * @param c
+     * @param c The iterable of itemsets to be added.
      */
     public void addAll(Iterable<UItemSet> c) {
       sets.addAllIterable(c);

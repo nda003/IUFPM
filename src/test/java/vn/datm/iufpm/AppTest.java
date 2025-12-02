@@ -13,6 +13,7 @@ import vn.datm.iufpm.lib.IUFPM;
 import vn.datm.iufpm.lib.TUFP;
 import vn.datm.iufpm.util.UItemSet;
 
+/** Unit test for simple App. */
 public class AppTest {
   @Test
   public void testISUCKSplit() {

@@ -35,8 +35,13 @@ public class App {
     public IUFPM create(int k);
   }
 
+  /** Factory for creating TUFP miners. */
   private class TUFPFactory implements IUFPMFactory {
 
+    /**
+     * @param k The top-K value to use for the miner.
+     * @return A new TUFP miner.
+     */
     @Override
     public IUFPM create(int k) {
       return new TUFP(k);
@@ -48,7 +53,12 @@ public class App {
     }
   }
 
+  /** Factory for creating ITUFP miners. */
   private class ITUFPFactory implements IUFPMFactory {
+    /**
+     * @param k The top-K value to use for the miner.
+     * @return A new ITUFP miner.
+     */
     public IUFPM create(int k) {
       return new ITUFP(k);
     }
@@ -59,7 +69,12 @@ public class App {
     }
   }
 
+  /** Factory for creating ISUCK miners. */
   private class ISUCKFactory implements IUFPMFactory {
+    /**
+     * @param k The top-K value to use for the miner.
+     * @return A new ISUCK miner.
+     */
     public IUFPM create(int k) {
       return new ISUCK(k);
     }
@@ -340,6 +355,11 @@ public class App {
     }
   }
 
+  /**
+   * The main entry point of the application.
+   *
+   * @param args The command-line arguments.
+   */
   public static void main(String[] args) {
     new App().doMain(args);
   }

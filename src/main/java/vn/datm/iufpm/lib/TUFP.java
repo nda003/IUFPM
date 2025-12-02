@@ -109,6 +109,14 @@ public class TUFP extends IUFPM {
     return pq.toList();
   }
 
+  /**
+   * Recursively mines for frequent patterns.
+   *
+   * @param pq The priority queue of frequent patterns.
+   * @param idToTraverse The list of transaction ids to traverse.
+   * @param patternToTraverse The list of patterns to traverse.
+   * @param fromIndex The index to start traversing from.
+   */
   private void mine(
       LimitedSortedItemSets pq,
       ImmutableIntList idToTraverse,

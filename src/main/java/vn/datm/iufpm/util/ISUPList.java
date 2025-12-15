@@ -8,17 +8,118 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 /**
  * Incrementally segmented uncertain pattern list. This data structure segments its list of
  * transations with each increments.
+ *
+ * <p>An increment is defined as the added database to which a transaction belongs to. For example,
+ * we have an accumulated dynamic uncertain database:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Increment</th>
+ * <th>Transaction ID</th>
+ * <th>Items</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td rowspan="2">1</td>
+ * <td>1</td>
+ * <td>a: 0.5, b: 0.4</td>
+ * </tr>
+ * <tr>
+ * <td>2</td>
+ * <td>b: 0.4</td>
+ * </tr>
+ * <tr>
+ * <td rowspan="2">2</td>
+ * <td>3</td>
+ * <td>a: 0.1</td>
+ * </tr>
+ * <tr>
+ * <td>4</td>
+ * <td>a: 0.3</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * Thus transaction 1 and 2 belongs to increment 1 and only 1, while transaction 3 and 4 belongs to
+ * increment 2 and only 2. Using this one-to-many relation between increments and transactions, we
+ * can modify the original ICUPList through segmentation using increment. By incrementally
+ * segmenting the {@link ISUPList}, we can look up a transaction ID quickly by just scanning the
+ * incremental segment that it belongs to, instead of scanning the whole list.
+ *
+ * <p>Using item a as an example, we have the {@link ISUPList}:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Increment</th>
+ * <th>Index</th>
+ * <th>Transaction ID</th>
+ * <th>Probability</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td>1</td>
+ * <td>0</td>
+ * <td>1</td>
+ * <td>0.5</td>
+ * </tr>
+ * <tr>
+ * <td rowspan="2">2</td>
+ * <td>1</td>
+ * <td>3</td>
+ * <td>0.1</td>
+ * </tr>
+ * <tr>
+ * <td>2</td>
+ * <td>4</td>
+ * <td>0.3</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * The incremental segmentation is as such:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Increment</th>
+ * <th>Start</th>
+ * <th>End</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td>1</td>
+ * <td>0</td>
+ * <td>0</td>
+ * </tr>
+ * <tr>
+ * <td>2</td>
+ * <td>1</td>
+ * <td>2</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * Start and end are inclusive.
  */
 public class ISUPList {
   private static final int LINEAR_SEARCH_THRESHOLD = 32;
 
   protected LinkedHashMap<Integer, int[]> incSeg = new LinkedHashMap<>();
-  protected IntArrayList tidList;
-  protected DoubleArrayList probList;
   protected int pairsPreviousSize = 0;
 
   private double maxSupport;
   private double expectedSupport;
+
+  /**
+   * We use 2 parallel primitive array lists for performance, with {@link #tidList} being
+   * Transaction ID column, and {@link #probList} being the Probability column.
+   */
+  protected IntArrayList tidList;
+
+  /**
+   * We use 2 parallel primitive array lists for performance, with {@link #tidList} being
+   * Transaction ID column, and {@link #probList} being the Probability column.
+   */
+  protected DoubleArrayList probList;
 
   protected ISUPList() {
     maxSupport = 0;

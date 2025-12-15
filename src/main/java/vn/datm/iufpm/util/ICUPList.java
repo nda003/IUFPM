@@ -6,7 +6,124 @@ import org.eclipse.collections.impl.list.mutable.primitive.DoubleArrayList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 /**
- * Incremental conditional uncertain pattern list. This data structure has incremental capability.
+ * Incremental conditional uncertain pattern list. This data structure has incremental capability by
+ * storing the last mined indexes of the parent {@link UPList}s and only joining the {@link UPList}s
+ * from the last indexes.
+ *
+ * <p>For example, we have an accumulated dynamic uncertain database:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Increment</th>
+ * <th>Transaction ID</th>
+ * <th>Items</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td rowspan="2">1</td>
+ * <td>1</td>
+ * <td>a: 0.5, b: 0.4</td>
+ * </tr>
+ * <tr>
+ * <td>2</td>
+ * <td>b: 0.4</td>
+ * </tr>
+ * <tr>
+ * <td rowspan="2">2</td>
+ * <td>3</td>
+ * <td>a: 0.1</td>
+ * </tr>
+ * <tr>
+ * <td>4</td>
+ * <td>a: 0.3</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * With item a, we have the {@link UPList}:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Index</th>
+ * <th>Transaction ID</th>
+ * <th>Probability</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td>0</td>
+ * <td>1</td>
+ * <td>0.5</td>
+ * </tr>
+ * <tr>
+ * <td>1</td>
+ * <td>3</td>
+ * <td>0.1</td>
+ * </tr>
+ * <tr>
+ * <td>2</td>
+ * <td>4</td>
+ * <td>0.3</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * And with b, we have:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Index</th>
+ * <th>Transaction ID</th>
+ * <th>Probability</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td>0</td>
+ * <td>1</td>
+ * <td>0.4</td>
+ * </tr>
+ * <tr>
+ * <td>1</td>
+ * <td>2</td>
+ * <td>0.4</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * Therefore, using itemset (a, b) as an example, we have the {@link ICUPList}:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Index</th>
+ * <th>Transaction ID</th>
+ * <th>Probability</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td>0</td>
+ * <td>1</td>
+ * <td>0.2</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * The last indexes are stored as such:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Parent</th>
+ * <th>Last index</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td>a</td>
+ * <td>3</td>
+ * </tr>
+ * <tr>
+ * <td>b</td>
+ * <td>2</td>
+ * </tr>
+ * </tbody>
+ * </table>
  */
 public class ICUPList extends UPList {
   private final ImmutableIntSet firstParent;

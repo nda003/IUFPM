@@ -7,7 +7,154 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 /**
  * Incrementally segmented conditional uncertain pattern list. This data structure has incremental
- * and segmented capability.
+ * capability.
+ *
+ * <p>An increment is defined as the added database to which a transaction belongs to. For example:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Increment</th>
+ * <th>Transaction ID</th>
+ * <th>Items</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td rowspan="2">1</td>
+ * <td>1</td>
+ * <td>a: 0.5, b: 0.4</td>
+ * </tr>
+ * <tr>
+ * <td>2</td>
+ * <td>b: 0.4</td>
+ * </tr>
+ * <tr>
+ * <td rowspan="2">2</td>
+ * <td>3</td>
+ * <td>a: 0.1</td>
+ * </tr>
+ * <tr>
+ * <td>4</td>
+ * <td>a: 0.3</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * Thus transaction 1 and 2 belongs to increment 1 and only 1, while transaction 3 and 4 belongs to
+ * increment 2 and only 2. Using this one-to-many relation between increments and transactions, we
+ * can extend the original {@link ISUPList} through segmentation using increment. By incrementally
+ * segmenting the {@link ISUPList}, we can look up a transaction ID quickly by just scanning the
+ * incremental segment that it belongs to, instead of scanning the whole list.
+ *
+ * <p>Using item a as an example, we have the {@link ISUPList}:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Increment</th>
+ * <th>Index</th>
+ * <th>Transaction ID</th>
+ * <th>Probability</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td>1</td>
+ * <td>0</td>
+ * <td>1</td>
+ * <td>0.5</td>
+ * </tr>
+ * <tr>
+ * <td rowspan="2">2</td>
+ * <td>1</td>
+ * <td>3</td>
+ * <td>0.1</td>
+ * </tr>
+ * <tr>
+ * <td>2</td>
+ * <td>4</td>
+ * <td>0.3</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * And with b, we have:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Increment</th>
+ * <th>Index</th>
+ * <th>Transaction ID</th>
+ * <th>Items</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td rowspan="2">1</td>
+ * <td>0</td>
+ * <td>1</td>
+ * <td>0.4</td>
+ * </tr>
+ * <tr>
+ * <td>1</td>
+ * <td>2</td>
+ * <td>0.4</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * Using itemset (a, b) as example:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Increment</th>
+ * <th>Index</th>
+ * <th>Transaction ID</th>
+ * <th>Probability</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td>1</td>
+ * <td>0</td>
+ * <td>1</td>
+ * <td>0.2</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * The incremental segmentation is as such:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Increment</th>
+ * <th>Start</th>
+ * <th>End</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td>1</td>
+ * <td>0</td>
+ * <td>0</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * Start and end are inclusive.
+ *
+ * <p>The last indexes are stored as such:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Parent</th>
+ * <th>Last index</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td>a</td>
+ * <td>3</td>
+ * </tr>
+ * <tr>
+ * <td>b</td>
+ * <td>2</td>
+ * </tr>
+ * </tbody>
+ * </table>
  */
 public class ISCUPList extends ISUPList {
   private final ImmutableIntSet firstParent;

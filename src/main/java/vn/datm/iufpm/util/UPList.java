@@ -3,13 +3,82 @@ package vn.datm.iufpm.util;
 import org.eclipse.collections.impl.list.mutable.primitive.DoubleArrayList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
-/** Uncertain pattern list. This data structure has no incremental capability. */
+/**
+ * Uncertain pattern list.
+ *
+ * <p>For example, we have an accumulated dynamic uncertain database:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Increment</th>
+ * <th>Transaction ID</th>
+ * <th>Items</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td rowspan="2">1</td>
+ * <td>1</td>
+ * <td>a: 0.5, b: 0.4</td>
+ * </tr>
+ * <tr>
+ * <td>2</td>
+ * <td>b: 0.4</td>
+ * </tr>
+ * <tr>
+ * <td rowspan="2">2</td>
+ * <td>3</td>
+ * <td>a: 0.1</td>
+ * </tr>
+ * <tr>
+ * <td>4</td>
+ * <td>a: 0.3</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * Using item a as an example, we have the {@link UPList}:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Index</th>
+ * <th>Transaction ID</th>
+ * <th>Probability</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td>0</td>
+ * <td>1</td>
+ * <td>0.5</td>
+ * </tr>
+ * <tr>
+ * <td>1</td>
+ * <td>3</td>
+ * <td>0.1</td>
+ * </tr>
+ * <tr>
+ * <td>2</td>
+ * <td>4</td>
+ * <td>0.3</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ */
 public class UPList {
   private static final int LINEAR_SEARCH_THRESHOLD = 32;
 
   private double expectedSupport;
   private double maxSupport;
+
+  /**
+   * We use 2 parallel primitive array lists for performance, with {@link #tidList} being
+   * Transaction ID column, and {@link #probList} being the Probability column.
+   */
   protected IntArrayList tidList;
+
+  /**
+   * We use 2 parallel primitive array lists for performance, with {@link #tidList} being
+   * Transaction ID column, and {@link #probList} being the Probability column.
+   */
   protected DoubleArrayList probList;
 
   protected UPList() {

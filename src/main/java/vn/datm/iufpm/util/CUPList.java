@@ -6,7 +6,105 @@ import org.eclipse.collections.api.set.primitive.ImmutableIntSet;
 import org.eclipse.collections.impl.list.mutable.primitive.DoubleArrayList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
-/** Conditional uncertain pattern list. This data structure has no incremental capability. */
+/**
+ * Conditional uncertain pattern list. This data structure has no incremental capability.
+ *
+ * <p>For example, we have an accumulated dynamic uncertain database:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Increment</th>
+ * <th>Transaction ID</th>
+ * <th>Items</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td rowspan="2">1</td>
+ * <td>1</td>
+ * <td>a: 0.5, b: 0.4</td>
+ * </tr>
+ * <tr>
+ * <td>2</td>
+ * <td>b: 0.4</td>
+ * </tr>
+ * <tr>
+ * <td rowspan="2">2</td>
+ * <td>3</td>
+ * <td>a: 0.1</td>
+ * </tr>
+ * <tr>
+ * <td>4</td>
+ * <td>a: 0.3</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * With item a, we have the {@link UPList}:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Index</th>
+ * <th>Transaction ID</th>
+ * <th>Probability</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td>0</td>
+ * <td>1</td>
+ * <td>0.5</td>
+ * </tr>
+ * <tr>
+ * <td>1</td>
+ * <td>3</td>
+ * <td>0.1</td>
+ * </tr>
+ * <tr>
+ * <td>2</td>
+ * <td>4</td>
+ * <td>0.3</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * And with b, we have:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Index</th>
+ * <th>Transaction ID</th>
+ * <th>Probability</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td>0</td>
+ * <td>1</td>
+ * <td>0.4</td>
+ * </tr>
+ * <tr>
+ * <td>1</td>
+ * <td>2</td>
+ * <td>0.4</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ *
+ * Therefore, using itemset (a, b) as an example, we have the {@link CUPList}:
+ *
+ * <table><thead>
+ * <tr>
+ * <th>Index</th>
+ * <th>Transaction ID</th>
+ * <th>Probability</th>
+ * </tr></thead>
+ * <tbody>
+ * <tr>
+ * <td>0</td>
+ * <td>1</td>
+ * <td>0.2</td>
+ * </tr>
+ * </tbody>
+ * </table>
+ */
 public class CUPList {
   /** The itemset associated with this class. */
   private UItemSet itemSet;
@@ -14,9 +112,16 @@ public class CUPList {
   /** The maximum support for the itemset of this class. */
   private double maxSupport;
 
-  /** The list of the transactions belonging to the itemset of this class. */
+  /**
+   * We use 2 parallel primitive array lists for performance, with {@link #tidList} being
+   * Transaction ID column, and {@link #probList} being the Probability column.
+   */
   private MutableIntList tidList = new IntArrayList();
 
+  /**
+   * We use 2 parallel primitive array lists for performance, with {@link #tidList} being
+   * Transaction ID column, and {@link #probList} being the Probability column.
+   */
   private MutableDoubleList probList = new DoubleArrayList();
 
   /**
@@ -131,28 +236,4 @@ public class CUPList {
   public int size() {
     return tidList.size();
   }
-
-  // @Override
-  // public String toString() {
-  //   if (isEmpty()) {
-  //     return String.format(
-  //         "(%s, expSup=%.2f, maxSup=%.2f, [])",
-  //         itemSet.getIds().toString(), itemSet.getExpectedSupport(), maxSupport);
-  //   }
-
-  //   StringBuilder sb =
-  //       new StringBuilder(
-  //           String.format(
-  //                   "(%s, expSup=%.2f, maxSup=%.2f, [",
-  //                   itemSet.getIds().toString(), itemSet.getExpectedSupport(), maxSupport)
-  //               + pairs.get(0).toString());
-
-  //   for (int i = 1; i < pairs.size(); i++) {
-  //     sb.append(", " + pairs.get(i).toString());
-  //   }
-
-  //   sb.append("])");
-
-  //   return sb.toString();
-  // }
 }

@@ -14,6 +14,12 @@ The dataset format follows `itemId itemId:itemProbability itemProbability`. For 
 12695 12703 18715:0.2097929623 0.3395640986 0.625568080
 ```
 
+Other uncertain datasets taken SPMF are available [here](https://drive.google.com/drive/folders/1zSmc2lRaRyub-AU7pxyA0SFsRAUkdMXj?usp=sharing). SPMF datasets were converted into uncertain datasets using a normal distribution with the same mean and standard deviation as above.
+
+Dataset folders with `Even` at the end means that the uncertain dataset were split into a file named `0` which is 10% of the original dataset and 45 other files with equal size to one another, each made up of 2% of the original, adding up to 90% of the original. This is to simulate an initial large dataset, followed by smaller even increments.
+
+Dataset folders with `Uneven` at the means that the uncertain dataset were split into a file named `0` which is 10% of the original dataset, with the other 90% being random uneven split. The gibberish file name of these 90% are so that the order in which these files are processed would also be randomized. This is to simulate an initial large dataset, followed by random and smaller uneven increments.
+
 ## Compiling
 
 This package requires Java 21 or higher. To compile and run the jar executable:

@@ -118,8 +118,14 @@ public class App {
    */
   public long timeIUFPM(IUFPM miner) {
     long start = System.nanoTime();
-    miner.mine();
-    return TimeUnit.MILLISECONDS.convert(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+    List<UItemSet> topk = miner.mine();
+    long ms = TimeUnit.MILLISECONDS.convert(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+
+    if (verbose) {
+      System.out.println("The timed outputed top-K itemsets: " + topk);
+    }
+
+    return ms;
   }
 
   /**

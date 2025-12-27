@@ -157,10 +157,32 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
  * </table>
  */
 public class ISCUPList extends ISUPList {
+  /**
+   * The first item or itemset that was used to mine the {@link ICUPList}. If an item was used to
+   * mine, the first parent would be a set of size 1.
+   */
   private final ImmutableIntSet firstParent;
+
+  /**
+   * The last index of the first parent's {@link UPList} or {@link CUPList} that was used to mine
+   * the {@link ICUPList}. If the first parent's {@link UPList} or {@link CUPList} was changed due
+   * to an increment in the database, the {@link ICUPList} is mined from this index of the {@link
+   * UPList} or {@link CUPList} and will be updated accordingly once the incremental mining is done.
+   */
   private int firstIndex = 0;
 
+  /**
+   * The second item that was used to mine the {@link ICUPList}. Due to how ITUFP mines and grows,
+   * the second parent will always be an item.
+   */
   private final int secondParent;
+
+  /**
+   * The last index of the second parent's {@link UPList} that was used to mine the {@link
+   * ICUPList}. If the second parent's {@link UPList} was changed due to an increment in the
+   * database, the {@link ICUPList} is mined from this index of the {@link UPList} and will be
+   * updated accordingly once the incremental mining is done.
+   */
   private int secondIndex = 0;
 
   /**

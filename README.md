@@ -31,13 +31,42 @@ java -jar target/iufpmBenchmark.jar -h
 
 ## Usage
 
-```bash
-java -jar iufpmBenchmark.jar [options...] arguments...
+```
+java -jar iufpmBenchmark.jar [options...] PATH
  PATH                      : the path to the input uncertain dataset
  -a [ISUCK | ITUFP | TUFP] : algorithm to benchmark (default: ISUCK)
- -k N,N,...                : top-Ks used for benchmarking seperated by comma
+ -k K,K,...                : top-Ks used for benchmarking seperated by comma
                              (default: 100,200,300,400,500)
  -m N                      : number of measurement iterations (default: 10)
- -v                        : verbose output (default: false)
+ -o outfile                : the output csv file if provided
+ -v                        : verbose output with top-K itemsets display
+                             (default: false)
  -w N                      : number of warmnup iterations (default: 2)
+
+The csv headers are:
+
+algorithm,topK,averageTime,times
+
+If PATH is a singular file, the times column will be a list of integers
+corresponding to how long it took the algorithm to mine the dataset during each
+measurements in milliseconds.
+
+If PATH is folder, each files will be processed in alphabetical order.
+The selected algorithm will first mine the first ordered file, followed by
+incrementing using the rest of the files without mining. After all the files
+have been incremented, mining will then done. The times column will be a list of
+integers corresponding to how long it took the algorithm to initially mine the
+first file, followed by how long it took the algorithm to incrementally mine the
+rest of the file during each measurements in milliseconds. For example, if we
+measure ISUCK with K=10 three times and we get these results:
+
+| Measurement | Initial mining | Incremental mining |
+|-------------|----------------|--------------------|
+| 1           | 30             | 300                |
+| 2           | 40             | 400                |
+| 3           | 35             | 350                |
+
+The csv row will be thus:
+
+ISUCK,10,385.0,30 300 40 400 35 350
  ```

@@ -1,5 +1,6 @@
 package vn.datm.iufpm;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,6 +23,7 @@ import vn.datm.iufpm.lib.ISUCK;
 import vn.datm.iufpm.lib.ITUFP;
 import vn.datm.iufpm.lib.IUFPM;
 import vn.datm.iufpm.lib.TUFP;
+import vn.datm.iufpm.util.UItemSet;
 
 /** App */
 public class App {
@@ -88,7 +90,7 @@ public class App {
   @Option(
       name = "-k",
       usage = "top-Ks used for benchmarking seperated by comma",
-      metaVar = "N,N,...")
+      metaVar = "K,K,...")
   private String k = "100,200,300,400,500";
 
   @Option(name = "-m", usage = "number of measurement iterations")
@@ -103,11 +105,14 @@ public class App {
   @Option(name = "-a", usage = "algorithm to benchmark")
   private Algorithm algorithm = Algorithm.ISUCK;
 
-  @Option(name = "-v", usage = "verbose output")
+  @Option(name = "-v", usage = "verbose output with top-K itemsets display")
   private boolean verbose = false;
 
   @Option(name = "-h", hidden = true, usage = "print help")
   private boolean help = false;
+
+  @Option(name = "-o", usage = "the output csv file if provided", metaVar = "outfile")
+  private String outfile;
 
   @Argument(usage = "the path to the input uncertain dataset", metaVar = "PATH")
   private List<String> arguements = new ArrayList<>();
@@ -214,8 +219,7 @@ public class App {
         if (verbose) {
           System.out.println(
               String.format(
-                  "Warmnup iteration %d against %d databases took: %d",
-                  i + 1, dbs.size(), t));
+                  "Warmnup iteration %d against %d databases took: %d", i + 1, dbs.size(), t));
         }
       } else {
         IUFPM miner = factory.create(k);
@@ -270,14 +274,46 @@ public class App {
       parser.parseArgument(args);
     } catch (CmdLineException e) {
       System.err.println(e.getMessage());
-      System.err.println("java -jar iufpmBenchmark.jar [options...] arguments...");
+      System.err.println("java -jar iufpmBenchmark.jar [options...] PATH");
       parser.printUsage(System.err);
       return;
     }
 
+    String bottomText =
+"""
+
+The csv headers are:
+
+algorithm,topK,averageTime,times
+
+If PATH is a singular file, the times column will be a list of integers
+corresponding to how long it took the algorithm to mine the dataset during each
+measurements in milliseconds.
+
+If PATH is folder, each files will be processed in alphabetical order.
+The selected algorithm will first mine the first ordered file, followed by
+incrementing using the rest of the files without mining. After all the files
+have been incremented, mining will then done. The times column will be a list of
+integers corresponding to how long it took the algorithm to initially mine the
+first file, followed by how long it took the algorithm to incrementally mine the
+rest of the file during each measurements in milliseconds. For example, if we
+measure ISUCK with K=10 three times and we get these results:
+
+| Measurement | Initial mining | Incremental mining |
+|-------------|----------------|--------------------|
+| 1           | 30             | 300                |
+| 2           | 40             | 400                |
+| 3           | 35             | 350                |
+
+The csv row will be thus:
+
+ISUCK,10,385,30 300 40 400 35 350
+""";
+
     if (help) {
-      System.out.println("java -jar iufpmBenchmark.jar [options...] arguments...");
+      System.out.println("java -jar iufpmBenchmark.jar [options...] PATH");
       parser.printUsage(System.out);
+      System.out.print(bottomText);
       return;
     }
 
@@ -288,7 +324,7 @@ public class App {
     } catch (NumberFormatException e) {
       e.printStackTrace();
       System.err.println("Unable to parse -k.");
-
+      System.err.print(bottomText);
       return;
     }
 
@@ -307,6 +343,7 @@ public class App {
     }
 
     Path dataset = Paths.get(arguements.getFirst());
+    StringBuilder sb = new StringBuilder();
 
     try {
       if (Files.isRegularFile(dataset)) {
@@ -317,9 +354,13 @@ public class App {
               LongList times = benchmarkIUFPM(factory, k, db);
               String row =
                   String.format(
-                      "%s,%d,%.2f,%s",
+                      "%s,%d,%.2f,%s\n",
                       factory.toString(), k, times.average(), times.makeString(" "));
-              System.out.println(row);
+              System.out.print(row);
+
+              if (outfile != null) {
+                sb.append(row);
+              }
             });
       } else if (Files.isDirectory(dataset)) {
         List<UTDatabase> dbs;
@@ -347,17 +388,30 @@ public class App {
               LongList times = benchmarkIUFPM(factory, k, dbs);
               String row =
                   String.format(
-                      "%s,%d,%.2f,%s",
+                      "%s,%d,%.2f,%s\n",
                       factory.toString(),
                       k,
                       ((double) times.sum()) / measurement,
                       times.makeString(" "));
-              System.out.println(row);
+              System.out.print(row);
+
+              if (outfile != null) {
+                sb.append(row);
+              }
             });
       }
     } catch (IOException e) {
       e.printStackTrace();
       System.err.println("Unable to access " + dataset);
+    }
+
+    if (outfile != null) {
+      try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(outfile))) {
+        writer.write(sb.toString());
+      } catch (IOException e) {
+        e.printStackTrace();
+        System.err.println("Unable to write to " + outfile);
+      }
     }
   }
 

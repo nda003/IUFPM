@@ -257,7 +257,7 @@ public class ISUCK extends IUFPM {
       return null;
     }
 
-    int processedSegmentSize = 0;
+    int processedTransactions = 0;
 
     for (Triple<Integer, int[], int[]> triple : sharedIncrementSegments) {
       int increment = triple.getOne();
@@ -279,11 +279,11 @@ public class ISUCK extends IUFPM {
         }
 
         scup.setFirstIndex(i + 1);
+        processedTransactions++;
 
         if (minimumSupport > scup.getExpectedSupport()
             && minimumSupport - scup.getExpectedSupport()
-                > (potentialSize - (i - s1Segment[0] + processedSegmentSize))
-                    * s2.getMaxSupport()) {
+                > (potentialSize - processedTransactions) * s2.getMaxSupport()) {
           ppf = true;
           break;
         }
@@ -296,8 +296,6 @@ public class ISUCK extends IUFPM {
       if (ppf) {
         break;
       }
-
-      processedSegmentSize += s1Segment[1] - s1Segment[0] + 1;
     }
 
     // if (scup.getIncrementSegments().isEmpty()) {
@@ -341,7 +339,7 @@ public class ISUCK extends IUFPM {
       return null;
     }
 
-    int processedSegmentSize = 0;
+    int processedTransaction = 0;
 
     for (Triple<Integer, int[], int[]> triple : sharedIncrementSegments) {
       int inc = triple.getOne();
@@ -363,11 +361,11 @@ public class ISUCK extends IUFPM {
         }
 
         scup.setFirstIndex(i + 1);
+        processedTransaction++;
 
         if (minimumSupport > scup.getExpectedSupport()
             && minimumSupport - scup.getExpectedSupport()
-                > (potentialSize - (i - s1Segment[0] + processedSegmentSize))
-                    * s2.getMaxSupport()) {
+                > (potentialSize - processedTransaction) * s2.getMaxSupport()) {
           ppf = true;
           break;
         }
@@ -380,8 +378,6 @@ public class ISUCK extends IUFPM {
       if (ppf) {
         break;
       }
-
-      processedSegmentSize += s1Segment[1] - s1Segment[0] + 1;
     }
 
     return scup;
@@ -429,19 +425,21 @@ public class ISUCK extends IUFPM {
           int[] s1Segment = entry.getValue();
 
           if (inc == lastInc) {
-            sharedIncrementSegments.add(
-                Tuples.triple(
-                    inc,
-                    new int[] {firstIndex, s1Segment[1]},
-                    new int[] {secondIndex, s2Segment[1]}));
-            potentialSize += s1Segment[1] - firstIndex + 1;
+            if (firstIndex < s1Segment[1] && secondIndex < s2Segment[1]) {
+              sharedIncrementSegments.add(
+                  Tuples.triple(
+                      inc,
+                      new int[] {firstIndex, s1Segment[1]},
+                      new int[] {secondIndex, s2Segment[1]}));
+              potentialSize += s1Segment[1] - firstIndex + 1;
+            }
           } else {
             sharedIncrementSegments.add(Tuples.triple(inc, s1Segment, s2Segment));
             potentialSize += s1Segment[1] - s1Segment[0] + 1;
           }
         }
 
-        int processedSegmentSize = 0;
+        int processedTransaction = 0;
 
         for (Triple<Integer, int[], int[]> triple : sharedIncrementSegments) {
           int inc = triple.getOne();
@@ -462,11 +460,11 @@ public class ISUCK extends IUFPM {
             }
 
             scup.setFirstIndex(i + 1);
+            processedTransaction++;
 
             if (minimumSupport > scup.getExpectedSupport()
                 && minimumSupport - scup.getExpectedSupport()
-                    > (potentialSize - (i - s1Segment[0] + processedSegmentSize))
-                        * s2.getMaxSupport()) {
+                    > (potentialSize - processedTransaction) * s2.getMaxSupport()) {
               ppf = true;
               break;
             }
@@ -479,8 +477,6 @@ public class ISUCK extends IUFPM {
           if (ppf) {
             break;
           }
-
-          processedSegmentSize += s1Segment[1] - s1Segment[0] + 1;
         }
       }
     } else {
@@ -530,7 +526,7 @@ public class ISUCK extends IUFPM {
           }
         }
 
-        int processedSegmentSize = 0;
+        int processedTransactions = 0;
 
         for (Triple<Integer, int[], int[]> triple : sharedIncrementSegments) {
           int inc = triple.getOne();
@@ -551,11 +547,11 @@ public class ISUCK extends IUFPM {
             }
 
             scup.setFirstIndex(i + 1);
+            processedTransactions++;
 
             if (minimumSupport > scup.getExpectedSupport()
                 && minimumSupport - scup.getExpectedSupport()
-                    > (potentialSize - (i - s1Segment[0] + processedSegmentSize))
-                        * s2.getMaxSupport()) {
+                    > (potentialSize - processedTransactions) * s2.getMaxSupport()) {
               ppf = true;
               break;
             }
@@ -568,8 +564,6 @@ public class ISUCK extends IUFPM {
           if (ppf) {
             break;
           }
-
-          processedSegmentSize += s1Segment[1] - s1Segment[0] + 1;
         }
       }
     }

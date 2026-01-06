@@ -104,7 +104,6 @@ public class ISUPList {
   private static final int LINEAR_SEARCH_THRESHOLD = 32;
 
   protected LinkedHashMap<Integer, int[]> incSeg = new LinkedHashMap<>();
-  protected int pairsPreviousSize = 0;
 
   private double maxSupport;
   private double expectedSupport;
@@ -120,6 +119,9 @@ public class ISUPList {
    * Transaction ID column, and {@link #probList} being the Probability column.
    */
   protected DoubleArrayList probList;
+
+  /** The previous of the lists for incremental segmentation. */
+  protected int pairsPreviousSize = 0;
 
   protected ISUPList() {
     maxSupport = 0;

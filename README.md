@@ -38,7 +38,7 @@ java -jar iufpmBenchmark.jar [options...] PATH
  -k K,K,...                : top-Ks used for benchmarking seperated by comma
                              (default: 100,200,300,400,500)
  -m N                      : number of measurement iterations (default: 10)
- -o outfile                : the output csv file if provided
+ -o csvfile                : the output csv file if provided
  -v                        : verbose output with top-K itemsets display
                              (default: false)
  -w N                      : number of warmnup iterations (default: 2)
@@ -68,5 +68,5 @@ measure ISUCK with K=10 three times and we get these results:
 
 The csv row will be thus:
 
-ISUCK,10,385.0,30 300 40 400 35 350
- ```
+ISUCK,10,385,30 300 40 400 35 350
+```

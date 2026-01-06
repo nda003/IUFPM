@@ -111,8 +111,8 @@ public class App {
   @Option(name = "-h", hidden = true, usage = "print help")
   private boolean help = false;
 
-  @Option(name = "-o", usage = "the output csv file if provided", metaVar = "outfile")
-  private String outfile;
+  @Option(name = "-o", usage = "the output csv file if provided", metaVar = "csvfile")
+  private String csvfile;
 
   @Argument(usage = "the path to the input uncertain dataset", metaVar = "PATH")
   private List<String> arguements = new ArrayList<>();
@@ -358,7 +358,7 @@ ISUCK,10,385,30 300 40 400 35 350
                       factory.toString(), k, times.average(), times.makeString(" "));
               System.out.print(row);
 
-              if (outfile != null) {
+              if (csvfile != null) {
                 sb.append(row);
               }
             });
@@ -395,7 +395,7 @@ ISUCK,10,385,30 300 40 400 35 350
                       times.makeString(" "));
               System.out.print(row);
 
-              if (outfile != null) {
+              if (csvfile != null) {
                 sb.append(row);
               }
             });
@@ -405,12 +405,12 @@ ISUCK,10,385,30 300 40 400 35 350
       System.err.println("Unable to access " + dataset);
     }
 
-    if (outfile != null) {
-      try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(outfile))) {
+    if (csvfile != null) {
+      try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(csvfile))) {
         writer.write(sb.toString());
       } catch (IOException e) {
         e.printStackTrace();
-        System.err.println("Unable to write to " + outfile);
+        System.err.println("Unable to write to " + csvfile);
       }
     }
   }

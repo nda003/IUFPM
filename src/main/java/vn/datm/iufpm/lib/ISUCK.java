@@ -151,7 +151,7 @@ public class ISUCK extends IUFPM {
           }
         }
 
-        if (!patternToTraverse.isEmpty()) {
+        if (patternToTraverse.size() > 1) {
           mine(pq, idToTraverse, patternToTraverse, i + 1);
         }
       }
@@ -174,50 +174,60 @@ public class ISUCK extends IUFPM {
       List<Pair<ImmutableIntSet, Integer>> patternToTraverse,
       int fromIndex) {
     for (Pair<ImmutableIntSet, Integer> pattern : patternToTraverse) {
+      ISCUPList iscup = iscupMap.get(pattern.getOne());
+
+      if (iscup.getExpectedSupport() <= minimumSupport) {
+        continue;
+      }
+
       List<Pair<ImmutableIntSet, Integer>> nextPatternToTraverse = new FastList<>();
 
       for (int i = pattern.getTwo() + 1; i < idToTraverse.size(); i++) {
-        ImmutableIntSet nextPattern = pattern.getOne().newWith(idToTraverse.get(i));
+        ISUPList isup = isupMap.get(idToTraverse.get(i));
 
         ISUPList sup = isupMap.get(idToTraverse.get(i));
 
-        if (iscupMap.get(pattern.getOne()).getExpectedSupport() * sup.getMaxSupport()
-            >= minimumSupport) {
-          if (iscupMap.containsKey(nextPattern)) {
-            reconstructISCUPList(iscupMap.get(nextPattern));
+        if (iscup.getExpectedSupport() <= minimumSupport
+            || iscup.getExpectedSupport() * isup.getMaxSupport() <= minimumSupport) {
+          continue;
+        }
 
-            if (iscupMap.get(nextPattern).getExpectedSupport() >= minimumSupport) {
-              pq.add(new UItemSet(nextPattern, iscupMap.get(nextPattern).getExpectedSupport()));
-              nextPatternToTraverse.add(Tuples.pair(nextPattern, i));
+        ImmutableIntSet nextPattern = pattern.getOne().newWith(idToTraverse.get(i));
 
-              if (pq.size() >= k) {
-                minimumSupport = pq.getLast().getExpectedSupport();
-              }
+        if (iscupMap.containsKey(nextPattern)) {
+          reconstructISCUPList(iscupMap.get(nextPattern));
+
+          if (iscupMap.get(nextPattern).getExpectedSupport() >= minimumSupport) {
+            pq.add(new UItemSet(nextPattern, iscupMap.get(nextPattern).getExpectedSupport()));
+            nextPatternToTraverse.add(Tuples.pair(nextPattern, i));
+
+            if (pq.size() >= k) {
+              minimumSupport = pq.getLast().getExpectedSupport();
             }
+          }
+        } else {
+          ISCUPList nextSCUP =
+              constructISCUPList(
+                  pattern.getOne(), iscupMap.get(pattern.getOne()), idToTraverse.get(i), sup);
+
+          if (nextSCUP != null) {
+            iscupMap.put(nextPattern, nextSCUP);
           } else {
-            ISCUPList nextSCUP =
-                constructISCUPList(
-                    pattern.getOne(), iscupMap.get(pattern.getOne()), idToTraverse.get(i), sup);
+            continue;
+          }
 
-            if (nextSCUP != null) {
-              iscupMap.put(nextPattern, nextSCUP);
-            } else {
-              continue;
-            }
+          if (nextSCUP.getExpectedSupport() >= minimumSupport) {
+            pq.add(new UItemSet(nextPattern, nextSCUP.getExpectedSupport()));
+            nextPatternToTraverse.add(Tuples.pair(nextPattern, i));
 
-            if (nextSCUP.getExpectedSupport() >= minimumSupport) {
-              pq.add(new UItemSet(nextPattern, nextSCUP.getExpectedSupport()));
-              nextPatternToTraverse.add(Tuples.pair(nextPattern, i));
-
-              if (pq.size() >= k) {
-                minimumSupport = pq.getLast().getExpectedSupport();
-              }
+            if (pq.size() >= k) {
+              minimumSupport = pq.getLast().getExpectedSupport();
             }
           }
         }
       }
 
-      if (!nextPatternToTraverse.isEmpty()) {
+      if (nextPatternToTraverse.size() > 1) {
         mine(pq, idToTraverse, nextPatternToTraverse, fromIndex);
       }
     }

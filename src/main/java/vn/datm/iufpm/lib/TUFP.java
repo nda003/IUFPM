@@ -1,6 +1,5 @@
 package vn.datm.iufpm.lib;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import org.eclipse.collections.api.factory.primitive.IntLists;
@@ -100,7 +99,7 @@ public class TUFP extends IUFPM {
           }
         }
 
-        if (!patternToTraverse.isEmpty()) {
+        if (patternToTraverse.size() > 1) {
           mine(pq, idToTraverse, patternToTraverse, i + 1);
         }
       }
@@ -129,21 +128,24 @@ public class TUFP extends IUFPM {
         int id = idToTraverse.get(i);
         UPList iUPList = iupMap.get(id);
 
-        if (pattern.getOne().getExpectedSupport() * iUPList.getMaxSupport() >= minimumSupport) {
-          CUPList nextCUPList = constructCUPList(pattern.getOne(), id, iUPList);
+        if (iUPList.getExpectedSupport() <= minimumSupport
+            || pattern.getOne().getExpectedSupport() * iUPList.getMaxSupport() <= minimumSupport) {
+          continue;
+        }
 
-          if (nextCUPList.getExpectedSupport() >= minimumSupport) {
-            pq.add(nextCUPList.getItemSet());
-            nextPatternToTraverse.add(Tuples.pair(nextCUPList, i));
+        CUPList nextCUPList = constructCUPList(pattern.getOne(), id, iUPList);
 
-            if (pq.size() >= k) {
-              minimumSupport = pq.getLast().getExpectedSupport();
-            }
+        if (nextCUPList.getExpectedSupport() >= minimumSupport) {
+          pq.add(nextCUPList.getItemSet());
+          nextPatternToTraverse.add(Tuples.pair(nextCUPList, i));
+
+          if (pq.size() >= k) {
+            minimumSupport = pq.getLast().getExpectedSupport();
           }
         }
       }
 
-      if (!nextPatternToTraverse.isEmpty()) {
+      if (nextPatternToTraverse.size() > 1) {
         mine(pq, idToTraverse, nextPatternToTraverse, fromIndex);
       }
     }
